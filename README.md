@@ -7,9 +7,9 @@ pick one, and browse its files and folders. Opening a file is delegated to the c
 ## Features
 
 - Register multiple root folders by absolute path; each has a display name (default = folder name).
-- Switch the active folder via chips in the header.
+- Switch the active folder by clicking a chip; rename it by double-clicking the chip.
 - Lazy folder tree (directories expand on click; folders first, then files).
-- Rename or remove folders from the settings panel (⚙).
+- Remove folders only from the settings panel (⚙) — chips carry no destructive action.
 - State (folder list, names, active folder) persists in `app.data` and is consistent
   across windows (live updates via `app.data.kv.watch`, no polling).
 

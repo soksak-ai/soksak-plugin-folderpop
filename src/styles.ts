@@ -6,14 +6,21 @@ export const GLOBAL_CSS = `
    계약(--header-h=33, 콘텐츠 그룹 헤더와 동일 단), 칩은 24px(콘텐츠 뷰 탭과 동일). 자기 fp-* 만. */
 .fp-tabs { flex:0 0 auto; height:var(--header-h, 33px); display:flex; align-items:center; gap:2px; padding:0 6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--bd); }
 .fp-tabs::-webkit-scrollbar { display:none; }
-.fp-tab { flex:none; height:24px; display:flex; align-items:center; gap:6px; padding:0 8px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
+.fp-tab { flex:none; height:24px; display:flex; align-items:center; padding:0 10px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
 .fp-tab:hover { background:var(--inset, rgba(127,127,127,.16)); }
 .fp-tab.active { font-weight:600; background:var(--card, rgba(127,127,127,.24)); border-color:var(--bd); color:var(--fg); }
 .fp-tab-title { overflow:hidden; text-overflow:ellipsis; }
-.fp-tab-x { flex:none; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:10px; padding:0 1px; opacity:.55; line-height:1; }
-.fp-tab-x:hover { opacity:1; color:var(--fg); }
 .fp-tab-add { flex:none; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:15px; padding:0 6px; line-height:1; }
 .fp-tab-add:hover { color:var(--fg); }
+.fp-tab-gear { flex:none; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:13px; padding:0 6px; line-height:1; }
+.fp-tab-gear:hover { color:var(--fg); }
+.fp-tab-gear.on { color:var(--acc); }
+/* 설정 패널 — 폴더 제거 전용 영역(칩/본문에는 제거 없음). */
+.fp-settings { flex:0 0 auto; display:flex; flex-direction:column; border-bottom:1px solid var(--bd); padding:4px 0; }
+.fp-set-row { display:flex; align-items:center; gap:8px; padding:3px 10px; }
+.fp-set-nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fg); }
+.fp-set-rm { flex:none; border:1px solid var(--bd); border-radius:5px; background:transparent; color:var(--fg3); cursor:pointer; font-size:11px; padding:2px 8px; }
+.fp-set-rm:hover { color:#e66; border-color:#e66; }
 .fp-body { flex:1; overflow:auto; padding:4px 0; }
 .fp-empty { padding:16px 12px; color:var(--fg3); font-size:11px; line-height:1.6; }
 .fp-row { display:flex; align-items:center; gap:4px; padding:2px 6px; cursor:pointer; white-space:nowrap; user-select:none; }

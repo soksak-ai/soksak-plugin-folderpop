@@ -121,6 +121,7 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
   const [folders, setFolders] = useState<Folder[]>([]);
   const [active, setActive] = useState<Folder | null>(null);
   const [adding, setAdding] = useState(false);
+  const [settings, setSettings] = useState(false);
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [newPath, setNewPath] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -154,12 +155,13 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
     await renameFolder(app, path, name);
     await reload();
   };
-  const onRemove = async (path: string) => {
-    await removeFolder(app, path);
-    await reload();
-  };
   const onSelect = async (path: string) => {
     await selectFolder(app, path);
+    await reload();
+  };
+  // 제거는 설정 패널에서만 — 칩에는 파괴적 동작 없음.
+  const onRemove = async (path: string) => {
+    await removeFolder(app, path);
     await reload();
   };
 
@@ -194,19 +196,9 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
               title={f.path}
               onClick={() => void onSelect(f.path)}
               onDoubleClick={() => setEditingPath(f.path)}
+              // 칩은 폴더 *선택/이름변경(더블클릭)*만 — 제거 기능 없음(파괴적 동작 미제공).
             >
               <span className="fp-tab-title">{f.name}</span>
-              <button
-                className="fp-tab-x"
-                data-node={`remove/${f.name}`}
-                title="폴더 제거"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void onRemove(f.path);
-                }}
-              >
-                ✕
-              </button>
             </div>
           ),
         )}
@@ -221,7 +213,38 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
         >
           +
         </button>
+        <button
+          className={`fp-tab-gear${settings ? " on" : ""}`}
+          data-node="settings-btn"
+          title="폴더 설정"
+          onClick={() => setSettings((s) => !s)}
+        >
+          ⚙
+        </button>
       </div>
+
+      {settings && (
+        // 설정 패널 — 폴더 *제거*는 오직 여기서만. 칩/본문에는 파괴적 동작 없음.
+        <div className="fp-settings" data-node="settings-panel">
+          {folders.length === 0 ? (
+            <div className="fp-empty">등록된 폴더가 없습니다.</div>
+          ) : (
+            folders.map((f) => (
+              <div key={f.path} className="fp-set-row">
+                <span className="fp-set-nm" title={f.path}>{f.name}</span>
+                <button
+                  className="fp-set-rm"
+                  data-node={`settings-remove/${f.name}`}
+                  title="폴더 제거"
+                  onClick={() => void onRemove(f.path)}
+                >
+                  제거
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {adding && (
         <div className="fp-add">

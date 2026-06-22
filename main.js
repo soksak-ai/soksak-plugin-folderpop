@@ -12906,6 +12906,7 @@ function FoldersView({ app }) {
   const [folders, setFolders] = (0, import_react.useState)([]);
   const [active, setActive] = (0, import_react.useState)(null);
   const [adding, setAdding] = (0, import_react.useState)(false);
+  const [settings, setSettings] = (0, import_react.useState)(false);
   const [editingPath, setEditingPath] = (0, import_react.useState)(null);
   const [newPath, setNewPath] = (0, import_react.useState)("");
   const [err, setErr] = (0, import_react.useState)(null);
@@ -12934,12 +12935,12 @@ function FoldersView({ app }) {
     await renameFolder(app, path, name);
     await reload();
   };
-  const onRemove = async (path) => {
-    await removeFolder(app, path);
-    await reload();
-  };
   const onSelect = async (path) => {
     await selectFolder(app, path);
+    await reload();
+  };
+  const onRemove = async (path) => {
+    await removeFolder(app, path);
     await reload();
   };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-root", children: [
@@ -12963,7 +12964,7 @@ function FoldersView({ app }) {
             }
           },
           f.path
-        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "div",
           {
             className: `fp-tab${active?.path === f.path ? " active" : ""}`,
@@ -12971,22 +12972,7 @@ function FoldersView({ app }) {
             title: f.path,
             onClick: () => void onSelect(f.path),
             onDoubleClick: () => setEditingPath(f.path),
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-tab-title", children: f.name }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                "button",
-                {
-                  className: "fp-tab-x",
-                  "data-node": `remove/${f.name}`,
-                  title: "\uD3F4\uB354 \uC81C\uAC70",
-                  onClick: (e) => {
-                    e.stopPropagation();
-                    void onRemove(f.path);
-                  },
-                  children: "\u2715"
-                }
-              )
-            ]
+            children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-tab-title", children: f.name })
           },
           f.path
         )
@@ -13003,8 +12989,32 @@ function FoldersView({ app }) {
           },
           children: "+"
         }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "button",
+        {
+          className: `fp-tab-gear${settings ? " on" : ""}`,
+          "data-node": "settings-btn",
+          title: "\uD3F4\uB354 \uC124\uC815",
+          onClick: () => setSettings((s) => !s),
+          children: "\u2699"
+        }
       )
     ] }),
+    settings && // 설정 패널 — 폴더 *제거*는 오직 여기서만. 칩/본문에는 파괴적 동작 없음.
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-settings", "data-node": "settings-panel", children: folders.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-empty", children: "\uB4F1\uB85D\uB41C \uD3F4\uB354\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4." }) : folders.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-set-row", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-set-nm", title: f.path, children: f.name }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "button",
+        {
+          className: "fp-set-rm",
+          "data-node": `settings-remove/${f.name}`,
+          title: "\uD3F4\uB354 \uC81C\uAC70",
+          onClick: () => void onRemove(f.path),
+          children: "\uC81C\uAC70"
+        }
+      )
+    ] }, f.path)) }),
     adding && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-add", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         "input",
@@ -13042,14 +13052,21 @@ var GLOBAL_CSS = `
    \uACC4\uC57D(--header-h=33, \uCF58\uD150\uCE20 \uADF8\uB8F9 \uD5E4\uB354\uC640 \uB3D9\uC77C \uB2E8), \uCE69\uC740 24px(\uCF58\uD150\uCE20 \uBDF0 \uD0ED\uACFC \uB3D9\uC77C). \uC790\uAE30 fp-* \uB9CC. */
 .fp-tabs { flex:0 0 auto; height:var(--header-h, 33px); display:flex; align-items:center; gap:2px; padding:0 6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--bd); }
 .fp-tabs::-webkit-scrollbar { display:none; }
-.fp-tab { flex:none; height:24px; display:flex; align-items:center; gap:6px; padding:0 8px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
+.fp-tab { flex:none; height:24px; display:flex; align-items:center; padding:0 10px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
 .fp-tab:hover { background:var(--inset, rgba(127,127,127,.16)); }
 .fp-tab.active { font-weight:600; background:var(--card, rgba(127,127,127,.24)); border-color:var(--bd); color:var(--fg); }
 .fp-tab-title { overflow:hidden; text-overflow:ellipsis; }
-.fp-tab-x { flex:none; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:10px; padding:0 1px; opacity:.55; line-height:1; }
-.fp-tab-x:hover { opacity:1; color:var(--fg); }
 .fp-tab-add { flex:none; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:15px; padding:0 6px; line-height:1; }
 .fp-tab-add:hover { color:var(--fg); }
+.fp-tab-gear { flex:none; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:13px; padding:0 6px; line-height:1; }
+.fp-tab-gear:hover { color:var(--fg); }
+.fp-tab-gear.on { color:var(--acc); }
+/* \uC124\uC815 \uD328\uB110 \u2014 \uD3F4\uB354 \uC81C\uAC70 \uC804\uC6A9 \uC601\uC5ED(\uCE69/\uBCF8\uBB38\uC5D0\uB294 \uC81C\uAC70 \uC5C6\uC74C). */
+.fp-settings { flex:0 0 auto; display:flex; flex-direction:column; border-bottom:1px solid var(--bd); padding:4px 0; }
+.fp-set-row { display:flex; align-items:center; gap:8px; padding:3px 10px; }
+.fp-set-nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--fg); }
+.fp-set-rm { flex:none; border:1px solid var(--bd); border-radius:5px; background:transparent; color:var(--fg3); cursor:pointer; font-size:11px; padding:2px 8px; }
+.fp-set-rm:hover { color:#e66; border-color:#e66; }
 .fp-body { flex:1; overflow:auto; padding:4px 0; }
 .fp-empty { padding:16px 12px; color:var(--fg3); font-size:11px; line-height:1.6; }
 .fp-row { display:flex; align-items:center; gap:4px; padding:2px 6px; cursor:pointer; white-space:nowrap; user-select:none; }
