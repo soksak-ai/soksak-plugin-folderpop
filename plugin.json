@@ -1,0 +1,81 @@
+{
+  "spec": "soksak-spec-plugin@0.0.1",
+  "id": "soksak-plugin-folderpop",
+  "name": {
+    "ko": "폴더팝",
+    "en": "Folderpop"
+  },
+  "version": "0.0.1",
+  "repo": "https://github.com/soksak-ai/soksak-plugin-folderpop.git",
+  "description": {
+    "ko": "좌측 사이드바 폴더 탐색기 — 여러 폴더를 등록하고(각 이름 변경) 선택한 폴더의 파일/폴더를 보여준다. 파일 열기는 코어 editor.open 으로 위임.",
+    "en": "Left sidebar folder explorer — register multiple folders (each renamable) and browse the selected folder's files/folders. Opening a file is delegated to the core editor.open command."
+  },
+  "entry": "main.js",
+  "permissions": [
+    "ui",
+    "fs:read",
+    "data",
+    "commands"
+  ],
+  "contributes": {
+    "views": [
+      {
+        "id": "folders",
+        "title": {
+          "ko": "폴더팝",
+          "en": "Folderpop"
+        },
+        "icon": "📂",
+        "placements": [
+          "sidebar-left"
+        ],
+        "defaultPlacement": "sidebar-left"
+      }
+    ],
+    "commands": [
+      {
+        "name": "ping",
+        "title": {
+          "ko": "적재/버전 확인(E2E)",
+          "en": "Ping (load/version check)"
+        }
+      },
+      {
+        "name": "folder.list",
+        "title": {
+          "ko": "등록 폴더 목록",
+          "en": "List folders"
+        }
+      },
+      {
+        "name": "folder.add",
+        "title": {
+          "ko": "폴더 등록",
+          "en": "Add folder"
+        }
+      },
+      {
+        "name": "folder.remove",
+        "title": {
+          "ko": "폴더 제거",
+          "en": "Remove folder"
+        }
+      },
+      {
+        "name": "folder.rename",
+        "title": {
+          "ko": "폴더 이름 변경",
+          "en": "Rename folder"
+        }
+      },
+      {
+        "name": "folder.select",
+        "title": {
+          "ko": "활성 폴더 선택",
+          "en": "Select active folder"
+        }
+      }
+    ]
+  }
+}
