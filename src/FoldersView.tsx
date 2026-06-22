@@ -41,10 +41,9 @@ function DirNode({
     setLoading(true);
     try {
       const l = (await app.fs.list(path)) as Listing;
-      const sorted = [...l.children].sort((a, b) =>
-        a.dir === b.dir ? a.name.localeCompare(b.name) : a.dir ? -1 : 1,
-      );
-      setChildren(sorted);
+      // 코어 list_children 가 이미 정렬(dir 우선 + 소문자 바이트순) — file-tree 와 동일하게 그대로 쓴다.
+      // 재정렬(localeCompare 등)하면 file-tree 와 순서가 달라진다(한글/라틴 collation 차이).
+      setChildren(l.children);
     } catch {
       setChildren([]);
     } finally {
@@ -109,7 +108,8 @@ function DirNode({
 export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext }) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [active, setActive] = useState<Folder | null>(null);
-  const [settings, setSettings] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [editingPath, setEditingPath] = useState<string | null>(null);
   const [newPath, setNewPath] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
@@ -131,6 +131,7 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
     try {
       await addFolder(app, newPath);
       setNewPath("");
+      setAdding(false);
       await reload();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -152,72 +153,79 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
 
   return (
     <div className="fp-root">
-      <div className="fp-head">
-        <div className="fp-sel">
-          {folders.map((f) => (
-            <button
+      {/* 폴더 선택 탭 줄 — 코어 콘텐츠 뷰 탭 구성과 동일: boxed 탭 + 닫기 + 끝에 추가.
+          더블클릭 = 이름 인라인 편집(박스 안 박스 금지), + = 폴더 추가(경로 입력 행 토글). */}
+      <div className="fp-tabs">
+        {folders.map((f) =>
+          editingPath === f.path ? (
+            <input
               key={f.path}
-              className={`fp-chip${active?.path === f.path ? " active" : ""}`}
+              className="fp-tab-rename"
+              data-node={`rename/${f.name}`}
+              defaultValue={f.name}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              onBlur={(e) => {
+                void onRename(f.path, e.target.value);
+                setEditingPath(null);
+              }}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                else if (e.key === "Escape") setEditingPath(null);
+              }}
+            />
+          ) : (
+            <div
+              key={f.path}
+              className={`fp-tab${active?.path === f.path ? " active" : ""}`}
               data-node={`chip/${f.name}`}
               title={f.path}
               onClick={() => void onSelect(f.path)}
+              onDoubleClick={() => setEditingPath(f.path)}
             >
-              {f.name}
-            </button>
-          ))}
-        </div>
+              <span className="fp-tab-title">{f.name}</span>
+              <button
+                className="fp-tab-x"
+                data-node={`remove/${f.name}`}
+                title="폴더 제거"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void onRemove(f.path);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ),
+        )}
         <button
-          className={`fp-gear${settings ? " active" : ""}`}
-          data-node="settings-toggle"
-          title="폴더 설정"
-          onClick={() => setSettings((s) => !s)}
+          className="fp-tab-add"
+          data-node="add-btn"
+          title="폴더 추가"
+          onClick={() => {
+            setErr(null);
+            setAdding((a) => !a);
+          }}
         >
-          ⚙
+          +
         </button>
       </div>
 
-      {settings && (
-        <div className="fp-settings">
-          <div className="fp-add">
-            <input
-              className="fp-input"
-              data-node="add-path"
-              placeholder="폴더 절대경로 붙여넣기"
-              value={newPath}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPath(e.target.value)}
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") void onAdd();
-              }}
-            />
-            <button className="fp-btn" data-node="add-btn" onClick={() => void onAdd()}>
-              추가
-            </button>
-          </div>
+      {adding && (
+        <div className="fp-add">
+          <input
+            className="fp-input"
+            data-node="add-path"
+            placeholder="폴더 절대경로 붙여넣기"
+            autoFocus
+            value={newPath}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPath(e.target.value)}
+            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === "Enter") void onAdd();
+              else if (e.key === "Escape") setAdding(false);
+            }}
+          />
           {err && <div className="fp-err" data-node="add-err">{err}</div>}
-          <div className="fp-flist">
-            {folders.map((f) => (
-              <div key={f.path} className="fp-fitem">
-                <input
-                  className="fp-input"
-                  data-node={`rename/${f.name}`}
-                  defaultValue={f.name}
-                  title={f.path}
-                  onBlur={(e) => void onRename(f.path, e.target.value)}
-                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                  }}
-                />
-                <button
-                  className="fp-x"
-                  data-node={`remove/${f.name}`}
-                  title="제거"
-                  onClick={() => void onRemove(f.path)}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

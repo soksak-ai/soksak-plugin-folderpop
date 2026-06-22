@@ -12845,10 +12845,7 @@ function DirNode({
     setLoading(true);
     try {
       const l = await app.fs.list(path);
-      const sorted = [...l.children].sort(
-        (a, b) => a.dir === b.dir ? a.name.localeCompare(b.name) : a.dir ? -1 : 1
-      );
-      setChildren(sorted);
+      setChildren(l.children);
     } catch {
       setChildren([]);
     } finally {
@@ -12907,7 +12904,8 @@ function DirNode({
 function FoldersView({ app }) {
   const [folders, setFolders] = (0, import_react.useState)([]);
   const [active, setActive] = (0, import_react.useState)(null);
-  const [settings, setSettings] = (0, import_react.useState)(false);
+  const [adding, setAdding] = (0, import_react.useState)(false);
+  const [editingPath, setEditingPath] = (0, import_react.useState)(null);
   const [newPath, setNewPath] = (0, import_react.useState)("");
   const [err, setErr] = (0, import_react.useState)(null);
   const reload = (0, import_react.useCallback)(async () => {
@@ -12925,6 +12923,7 @@ function FoldersView({ app }) {
     try {
       await addFolder(app, newPath);
       setNewPath("");
+      setAdding(false);
       await reload();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -12943,72 +12942,85 @@ function FoldersView({ app }) {
     await reload();
   };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-root", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-head", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-sel", children: folders.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "button",
-        {
-          className: `fp-chip${active?.path === f.path ? " active" : ""}`,
-          "data-node": `chip/${f.name}`,
-          title: f.path,
-          onClick: () => void onSelect(f.path),
-          children: f.name
-        },
-        f.path
-      )) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-tabs", children: [
+      folders.map(
+        (f) => editingPath === f.path ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "input",
+          {
+            className: "fp-tab-rename",
+            "data-node": `rename/${f.name}`,
+            defaultValue: f.name,
+            autoFocus: true,
+            onClick: (e) => e.stopPropagation(),
+            onBlur: (e) => {
+              void onRename(f.path, e.target.value);
+              setEditingPath(null);
+            },
+            onKeyDown: (e) => {
+              if (e.key === "Enter") e.target.blur();
+              else if (e.key === "Escape") setEditingPath(null);
+            }
+          },
+          f.path
+        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "div",
+          {
+            className: `fp-tab${active?.path === f.path ? " active" : ""}`,
+            "data-node": `chip/${f.name}`,
+            title: f.path,
+            onClick: () => void onSelect(f.path),
+            onDoubleClick: () => setEditingPath(f.path),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-tab-title", children: f.name }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                "button",
+                {
+                  className: "fp-tab-x",
+                  "data-node": `remove/${f.name}`,
+                  title: "\uD3F4\uB354 \uC81C\uAC70",
+                  onClick: (e) => {
+                    e.stopPropagation();
+                    void onRemove(f.path);
+                  },
+                  children: "\u2715"
+                }
+              )
+            ]
+          },
+          f.path
+        )
+      ),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         "button",
         {
-          className: `fp-gear${settings ? " active" : ""}`,
-          "data-node": "settings-toggle",
-          title: "\uD3F4\uB354 \uC124\uC815",
-          onClick: () => setSettings((s) => !s),
-          children: "\u2699"
+          className: "fp-tab-add",
+          "data-node": "add-btn",
+          title: "\uD3F4\uB354 \uCD94\uAC00",
+          onClick: () => {
+            setErr(null);
+            setAdding((a) => !a);
+          },
+          children: "+"
         }
       )
     ] }),
-    settings && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-settings", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-add", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "input",
-          {
-            className: "fp-input",
-            "data-node": "add-path",
-            placeholder: "\uD3F4\uB354 \uC808\uB300\uACBD\uB85C \uBD99\uC5EC\uB123\uAE30",
-            value: newPath,
-            onChange: (e) => setNewPath(e.target.value),
-            onKeyDown: (e) => {
-              if (e.key === "Enter") void onAdd();
-            }
+    adding && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-add", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "input",
+        {
+          className: "fp-input",
+          "data-node": "add-path",
+          placeholder: "\uD3F4\uB354 \uC808\uB300\uACBD\uB85C \uBD99\uC5EC\uB123\uAE30",
+          autoFocus: true,
+          value: newPath,
+          onChange: (e) => setNewPath(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") void onAdd();
+            else if (e.key === "Escape") setAdding(false);
           }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "fp-btn", "data-node": "add-btn", onClick: () => void onAdd(), children: "\uCD94\uAC00" })
-      ] }),
-      err && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-err", "data-node": "add-err", children: err }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-flist", children: folders.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-fitem", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "input",
-          {
-            className: "fp-input",
-            "data-node": `rename/${f.name}`,
-            defaultValue: f.name,
-            title: f.path,
-            onBlur: (e) => void onRename(f.path, e.target.value),
-            onKeyDown: (e) => {
-              if (e.key === "Enter") e.target.blur();
-            }
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            className: "fp-x",
-            "data-node": `remove/${f.name}`,
-            title: "\uC81C\uAC70",
-            onClick: () => void onRemove(f.path),
-            children: "\u2715"
-          }
-        )
-      ] }, f.path)) })
+        }
+      ),
+      err && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-err", "data-node": "add-err", children: err })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-body", children: active ? (
       // key=path: 활성 폴더 전환 시 루트를 remount(캐시된 children 초기화).
@@ -13024,15 +13036,18 @@ function FoldersView({ app }) {
 // src/styles.ts
 var GLOBAL_CSS = `
 .fp-root { display:flex; flex-direction:column; height:100%; font-size:12px; color:var(--fg); }
-.fp-head { display:flex; align-items:center; gap:4px; padding:5px 6px; border-bottom:1px solid var(--bd-soft, var(--bd)); }
-.fp-sel { flex:1; min-width:0; display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; }
-.fp-sel::-webkit-scrollbar { display:none; }
-.fp-chip { flex:none; border:none; border-radius:6px; background:transparent; color:var(--fg3); padding:3px 8px; font-size:11px; cursor:pointer; white-space:nowrap; }
-.fp-chip:hover { background:rgba(127,127,127,.18); color:var(--fg); }
-.fp-chip.active { background:rgba(127,127,127,.28); color:var(--fg); }
-.fp-gear { flex:none; border:none; background:transparent; color:var(--fg3); cursor:pointer; padding:3px 6px; border-radius:6px; font-size:13px; }
-.fp-gear:hover { background:rgba(127,127,127,.18); color:var(--fg); }
-.fp-gear.active { color:var(--acc); }
+/* \uD3F4\uB354 \uC120\uD0DD \uD0ED \uC904 \u2014 \uCF54\uC5B4 \uCF58\uD150\uCE20 \uBDF0 \uD0ED \uAD6C\uC131/\uCE58\uC218\uC640 \uB3D9\uC77C(boxed + \uB2EB\uAE30 + \uCD94\uAC00). \uD589 \uB192\uC774\uB294 \uCF54\uC5B4 \uD06C\uB86C
+   \uACC4\uC57D(--header-h=33, \uCF58\uD150\uCE20 \uADF8\uB8F9 \uD5E4\uB354\uC640 \uB3D9\uC77C \uB2E8), \uCE69\uC740 24px(\uCF58\uD150\uCE20 \uBDF0 \uD0ED\uACFC \uB3D9\uC77C). \uC790\uAE30 fp-* \uB9CC. */
+.fp-tabs { flex:0 0 auto; height:var(--header-h, 33px); display:flex; align-items:center; gap:2px; padding:0 6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--bd); }
+.fp-tabs::-webkit-scrollbar { display:none; }
+.fp-tab { flex:none; height:24px; display:flex; align-items:center; gap:6px; padding:0 8px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
+.fp-tab:hover { background:var(--inset, rgba(127,127,127,.16)); }
+.fp-tab.active { font-weight:600; background:var(--card, rgba(127,127,127,.24)); border-color:var(--bd); color:var(--fg); }
+.fp-tab-title { overflow:hidden; text-overflow:ellipsis; }
+.fp-tab-x { flex:none; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:10px; padding:0 1px; opacity:.55; line-height:1; }
+.fp-tab-x:hover { opacity:1; color:var(--fg); }
+.fp-tab-add { flex:none; height:24px; border:none; background:transparent; color:var(--fg3); cursor:pointer; font-size:15px; padding:0 6px; line-height:1; }
+.fp-tab-add:hover { color:var(--fg); }
 .fp-body { flex:1; overflow:auto; padding:4px 0; }
 .fp-empty { padding:16px 12px; color:var(--fg3); font-size:11px; line-height:1.6; }
 .fp-row { display:flex; align-items:center; gap:4px; padding:2px 6px; cursor:pointer; white-space:nowrap; user-select:none; }
@@ -13040,17 +13055,10 @@ var GLOBAL_CSS = `
 .fp-tw { width:12px; text-align:center; color:var(--fg3); flex:none; }
 .fp-ic { flex:none; }
 .fp-nm { overflow:hidden; text-overflow:ellipsis; }
-.fp-settings { border-bottom:1px solid var(--bd-soft, var(--bd)); padding:6px; display:flex; flex-direction:column; gap:6px; }
-.fp-add { display:flex; gap:4px; }
+.fp-add { display:flex; flex-direction:column; gap:4px; padding:6px; border-bottom:1px solid var(--bd-soft, var(--bd)); }
 .fp-input { flex:1; min-width:0; border:1px solid var(--bd); border-radius:6px; background:var(--inset, transparent); color:var(--fg); font-size:11px; padding:4px 7px; }
 .fp-input:focus { outline:1px solid var(--acc); outline-offset:-1px; }
-.fp-btn { flex:none; border:1px solid var(--bd); border-radius:6px; background:transparent; color:var(--fg); font-size:11px; padding:4px 8px; cursor:pointer; }
-.fp-btn:hover { background:rgba(127,127,127,.18); }
-.fp-flist { display:flex; flex-direction:column; gap:2px; }
-.fp-fitem { display:flex; align-items:center; gap:4px; }
-.fp-fitem .fp-input { padding:3px 6px; }
-.fp-x { flex:none; border:none; background:transparent; color:var(--fg3); cursor:pointer; padding:2px 5px; border-radius:5px; font-size:12px; }
-.fp-x:hover { background:rgba(127,127,127,.2); color:var(--fg); }
+.fp-tab-rename { flex:none; min-width:0; max-width:160px; border:none; border-radius:6px; background:var(--inset); color:var(--fg); font-size:12px; padding:0 8px; outline:1px solid var(--acc); outline-offset:-1px; }
 .fp-err { color:#e66; font-size:11px; padding:0 2px; }
 `;
 
