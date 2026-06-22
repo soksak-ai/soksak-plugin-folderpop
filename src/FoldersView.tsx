@@ -20,7 +20,74 @@ import {
 
 type Child = { name: string; dir: boolean };
 
-// 한 디렉터리 노드(lazy) — 펼치면 app.fs.list 로 자식 로드. 파일 클릭 → editor.open.
+const joinPath = (p: string, n: string) => `${p.replace(/\/+$/, "")}/${n}`;
+
+// 한 디렉터리의 자식들(lazy 로딩) — 디렉터리=DirNode(접기), 파일=행. 정렬은 코어 순서(file-tree 동일).
+// [RULE] 루트(활성 폴더)는 자기 노드 없이 자식을 *바로* 그린다(file-tree: project1 헤더 + 자식 직접).
+function FolderChildren({
+  app,
+  path,
+  depth,
+}: {
+  app: PluginApi;
+  path: string;
+  depth: number;
+}) {
+  const [children, setChildren] = useState<Child[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const list = app.fs?.list;
+    if (!list) {
+      setChildren([]);
+      return;
+    }
+    void (list(path) as Promise<Listing>)
+      .then((l) => {
+        if (!cancelled) setChildren(l.children);
+      })
+      .catch(() => {
+        if (!cancelled) setChildren([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [app, path]);
+
+  const openFile = (filePath: string) => {
+    void app.commands?.execute("editor.open", { path: filePath });
+  };
+
+  if (children === null) {
+    return (
+      <div className="fp-row" style={{ paddingLeft: 6 + depth * 12 }}>
+        <span className="fp-nm" style={{ color: "var(--fg3)" }}>…</span>
+      </div>
+    );
+  }
+  return (
+    <>
+      {children.map((c) =>
+        c.dir ? (
+          <DirNode key={c.name} app={app} path={joinPath(path, c.name)} name={c.name} depth={depth} />
+        ) : (
+          <div
+            key={c.name}
+            className="fp-row"
+            style={{ paddingLeft: 6 + depth * 12 }}
+            onClick={() => openFile(joinPath(path, c.name))}
+          >
+            <span className="fp-tw" />
+            <span className="fp-ic">📄</span>
+            <span className="fp-nm">{c.name}</span>
+          </div>
+        ),
+      )}
+    </>
+  );
+}
+
+// 하위 디렉터리 노드 — 폴더 행(접기) + 펼치면 자식(FolderChildren). 클릭=토글. 파일 열기는 editor.open.
 function DirNode({
   app,
   path,
@@ -32,75 +99,20 @@ function DirNode({
   name: string;
   depth: number;
 }) {
-  const [open, setOpen] = useState(depth === 0); // 루트는 기본 펼침
-  const [children, setChildren] = useState<Child[] | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!app.fs?.list) return;
-    setLoading(true);
-    try {
-      const l = (await app.fs.list(path)) as Listing;
-      // 코어 list_children 가 이미 정렬(dir 우선 + 소문자 바이트순) — file-tree 와 동일하게 그대로 쓴다.
-      // 재정렬(localeCompare 등)하면 file-tree 와 순서가 달라진다(한글/라틴 collation 차이).
-      setChildren(l.children);
-    } catch {
-      setChildren([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [app, path]);
-
-  useEffect(() => {
-    if (open && children === null) void load();
-  }, [open, children, load]);
-
-  const join = (p: string, n: string) => `${p.replace(/\/+$/, "")}/${n}`;
-  const openFile = (filePath: string) => {
-    void app.commands?.execute("editor.open", { path: filePath });
-  };
-
+  const [open, setOpen] = useState(false);
   return (
     <>
       <div
         className="fp-row"
         style={{ paddingLeft: 6 + depth * 12 }}
-        data-node={`tree/${depth === 0 ? "root" : name}`}
+        data-node={`tree/${name}`}
         onClick={() => setOpen((o) => !o)}
       >
         <span className="fp-tw">{open ? "▾" : "▸"}</span>
         <span className="fp-ic">📁</span>
         <span className="fp-nm">{name}</span>
       </div>
-      {open &&
-        (loading && children === null ? (
-          <div className="fp-row" style={{ paddingLeft: 6 + (depth + 1) * 12 }}>
-            <span className="fp-nm" style={{ color: "var(--fg3)" }}>…</span>
-          </div>
-        ) : (
-          (children ?? []).map((c) =>
-            c.dir ? (
-              <DirNode
-                key={c.name}
-                app={app}
-                path={join(path, c.name)}
-                name={c.name}
-                depth={depth + 1}
-              />
-            ) : (
-              <div
-                key={c.name}
-                className="fp-row"
-                style={{ paddingLeft: 6 + (depth + 1) * 12 }}
-                onClick={() => openFile(join(path, c.name))}
-              >
-                <span className="fp-tw" />
-                <span className="fp-ic">📄</span>
-                <span className="fp-nm">{c.name}</span>
-              </div>
-            ),
-          )
-        ))}
+      {open && <FolderChildren app={app} path={path} depth={depth + 1} />}
     </>
   );
 }
@@ -231,12 +243,13 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
 
       <div className="fp-body">
         {active ? (
-          // key=path: 활성 폴더 전환 시 루트를 remount(캐시된 children 초기화).
-          <DirNode key={active.path} app={app} path={active.path} name={active.name} depth={0} />
+          // 활성 폴더의 자식을 *바로* 그린다(루트 노드 없음 — file-tree 와 동일 구조). key=path: 폴더
+          // 전환 시 remount.
+          <FolderChildren key={active.path} app={app} path={active.path} depth={0} />
         ) : (
           <div className="fp-empty">
             등록된 폴더가 없습니다.
-            <br />⚙ 를 눌러 폴더를 추가하세요.
+            <br />+ 를 눌러 폴더를 추가하세요.
           </div>
         )}
       </div>

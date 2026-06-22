@@ -12831,41 +12831,66 @@ async function activeFolder(app) {
 
 // src/FoldersView.tsx
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+var joinPath = (p, n) => `${p.replace(/\/+$/, "")}/${n}`;
+function FolderChildren({
+  app,
+  path,
+  depth
+}) {
+  const [children, setChildren] = (0, import_react.useState)(null);
+  (0, import_react.useEffect)(() => {
+    let cancelled = false;
+    const list = app.fs?.list;
+    if (!list) {
+      setChildren([]);
+      return;
+    }
+    void list(path).then((l) => {
+      if (!cancelled) setChildren(l.children);
+    }).catch(() => {
+      if (!cancelled) setChildren([]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [app, path]);
+  const openFile = (filePath) => {
+    void app.commands?.execute("editor.open", { path: filePath });
+  };
+  if (children === null) {
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-row", style: { paddingLeft: 6 + depth * 12 }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-nm", style: { color: "var(--fg3)" }, children: "\u2026" }) });
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: children.map(
+    (c) => c.dir ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DirNode, { app, path: joinPath(path, c.name), name: c.name, depth }, c.name) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+      "div",
+      {
+        className: "fp-row",
+        style: { paddingLeft: 6 + depth * 12 },
+        onClick: () => openFile(joinPath(path, c.name)),
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-tw" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-ic", children: "\u{1F4C4}" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-nm", children: c.name })
+        ]
+      },
+      c.name
+    )
+  ) });
+}
 function DirNode({
   app,
   path,
   name,
   depth
 }) {
-  const [open, setOpen] = (0, import_react.useState)(depth === 0);
-  const [children, setChildren] = (0, import_react.useState)(null);
-  const [loading, setLoading] = (0, import_react.useState)(false);
-  const load = (0, import_react.useCallback)(async () => {
-    if (!app.fs?.list) return;
-    setLoading(true);
-    try {
-      const l = await app.fs.list(path);
-      setChildren(l.children);
-    } catch {
-      setChildren([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [app, path]);
-  (0, import_react.useEffect)(() => {
-    if (open && children === null) void load();
-  }, [open, children, load]);
-  const join = (p, n) => `${p.replace(/\/+$/, "")}/${n}`;
-  const openFile = (filePath) => {
-    void app.commands?.execute("editor.open", { path: filePath });
-  };
+  const [open, setOpen] = (0, import_react.useState)(false);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
       "div",
       {
         className: "fp-row",
         style: { paddingLeft: 6 + depth * 12 },
-        "data-node": `tree/${depth === 0 ? "root" : name}`,
+        "data-node": `tree/${name}`,
         onClick: () => setOpen((o) => !o),
         children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-tw", children: open ? "\u25BE" : "\u25B8" }),
@@ -12874,31 +12899,7 @@ function DirNode({
         ]
       }
     ),
-    open && (loading && children === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-row", style: { paddingLeft: 6 + (depth + 1) * 12 }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-nm", style: { color: "var(--fg3)" }, children: "\u2026" }) }) : (children ?? []).map(
-      (c) => c.dir ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        DirNode,
-        {
-          app,
-          path: join(path, c.name),
-          name: c.name,
-          depth: depth + 1
-        },
-        c.name
-      ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-        "div",
-        {
-          className: "fp-row",
-          style: { paddingLeft: 6 + (depth + 1) * 12 },
-          onClick: () => openFile(join(path, c.name)),
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-tw" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-ic", children: "\u{1F4C4}" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "fp-nm", children: c.name })
-          ]
-        },
-        c.name
-      )
-    ))
+    open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FolderChildren, { app, path, depth: depth + 1 })
   ] });
 }
 function FoldersView({ app }) {
@@ -13023,12 +13024,13 @@ function FoldersView({ app }) {
       err && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-err", "data-node": "add-err", children: err })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "fp-body", children: active ? (
-      // key=path: 활성 폴더 전환 시 루트를 remount(캐시된 children 초기화).
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DirNode, { app, path: active.path, name: active.name, depth: 0 }, active.path)
+      // 활성 폴더의 자식을 *바로* 그린다(루트 노드 없음 — file-tree 와 동일 구조). key=path: 폴더
+      // 전환 시 remount.
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FolderChildren, { app, path: active.path, depth: 0 }, active.path)
     ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "fp-empty", children: [
       "\uB4F1\uB85D\uB41C \uD3F4\uB354\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-      "\u2699 \uB97C \uB20C\uB7EC \uD3F4\uB354\uB97C \uCD94\uAC00\uD558\uC138\uC694."
+      "+ \uB97C \uB20C\uB7EC \uD3F4\uB354\uB97C \uCD94\uAC00\uD558\uC138\uC694."
     ] }) })
   ] });
 }
