@@ -1,10 +1,9 @@
-// folderpop 좌측 사이드바 뷰 — 등록 폴더 선택(chips) + 설정(추가/이름변경/제거) + 활성 폴더 lazy 트리.
+// folderpop 좌측 사이드바 뷰 — 등록 폴더 선택(chips) + 추가(프로젝트 하위폴더 선택 모달) + 활성 폴더 lazy 트리.
 // 데이터는 folders.ts(app.data 단일진실). app.data.kv.watch 로 멀티창/커맨드 변경을 자동 반영.
 import {
   useCallback,
   useEffect,
   useState,
-  type ChangeEvent,
   type KeyboardEvent,
 } from "react";
 import type { PluginApi, PluginViewContext, Listing } from "./host";
@@ -13,7 +12,6 @@ import {
   listFolders,
   activeFolder,
   addFolder,
-  removeFolder,
   renameFolder,
   selectFolder,
 } from "./folders";
@@ -117,13 +115,82 @@ function DirNode({
   );
 }
 
-export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext }) {
+// 프로젝트 루트의 *하위 디렉터리*만 나열해 고른다(+ 모달 본문). 이미 등록된 폴더는 비활성.
+function SubfolderPicker({
+  app,
+  root,
+  registered,
+  onPick,
+}: {
+  app: PluginApi;
+  root: string | null;
+  registered: Set<string>;
+  onPick: (path: string) => void;
+}) {
+  const [dirs, setDirs] = useState<Child[] | null>(null);
+
+  useEffect(() => {
+    if (!root) {
+      setDirs([]);
+      return;
+    }
+    let cancelled = false;
+    const list = app.fs?.list;
+    if (!list) {
+      setDirs([]);
+      return;
+    }
+    void (list(root) as Promise<Listing>)
+      .then((l) => {
+        if (!cancelled) setDirs(l.children.filter((c) => c.dir));
+      })
+      .catch(() => {
+        if (!cancelled) setDirs([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [app, root]);
+
+  if (!root) return <div className="fp-modal-empty">프로젝트 폴더가 없습니다.</div>;
+  if (dirs === null) return <div className="fp-modal-empty">…</div>;
+  if (dirs.length === 0)
+    return <div className="fp-modal-empty">하위 폴더가 없습니다.</div>;
+
+  return (
+    <div className="fp-modal-list">
+      {dirs.map((d) => {
+        const path = joinPath(root, d.name);
+        const already = registered.has(path);
+        return (
+          <button
+            key={d.name}
+            className="fp-modal-item"
+            data-node={`add-pick/${d.name}`}
+            disabled={already}
+            onClick={() => onPick(path)}
+          >
+            <span className="fp-ic">📁</span>
+            <span className="fp-nm">{d.name}</span>
+            {already && <span className="fp-modal-tag">등록됨</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function FoldersView({
+  app,
+  ctx,
+}: {
+  app: PluginApi;
+  ctx: PluginViewContext;
+}) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [active, setActive] = useState<Folder | null>(null);
   const [adding, setAdding] = useState(false);
-  const [settings, setSettings] = useState(false);
   const [editingPath, setEditingPath] = useState<string | null>(null);
-  const [newPath, setNewPath] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
@@ -139,11 +206,11 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
     return () => un?.dispose();
   }, [reload, app]);
 
-  const onAdd = async () => {
+  // + 모달에서 고른 하위폴더를 등록. 실패(중복 등)는 모달 안에 표시.
+  const onAddPath = async (path: string) => {
     setErr(null);
     try {
-      await addFolder(app, newPath);
-      setNewPath("");
+      await addFolder(app, path);
       setAdding(false);
       await reload();
     } catch (e) {
@@ -157,11 +224,6 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
   };
   const onSelect = async (path: string) => {
     await selectFolder(app, path);
-    await reload();
-  };
-  // 제거는 설정 패널에서만 — 칩에는 파괴적 동작 없음.
-  const onRemove = async (path: string) => {
-    await removeFolder(app, path);
     await reload();
   };
 
@@ -208,59 +270,37 @@ export function FoldersView({ app }: { app: PluginApi; ctx: PluginViewContext })
           title="폴더 추가"
           onClick={() => {
             setErr(null);
-            setAdding((a) => !a);
+            setAdding(true);
           }}
         >
           +
         </button>
-        <button
-          className={`fp-tab-gear${settings ? " on" : ""}`}
-          data-node="settings-btn"
-          title="폴더 설정"
-          onClick={() => setSettings((s) => !s)}
-        >
-          ⚙
-        </button>
       </div>
 
-      {settings && (
-        // 설정 패널 — 폴더 *제거*는 오직 여기서만. 칩/본문에는 파괴적 동작 없음.
-        <div className="fp-settings" data-node="settings-panel">
-          {folders.length === 0 ? (
-            <div className="fp-empty">등록된 폴더가 없습니다.</div>
-          ) : (
-            folders.map((f) => (
-              <div key={f.path} className="fp-set-row">
-                <span className="fp-set-nm" title={f.path}>{f.name}</span>
-                <button
-                  className="fp-set-rm"
-                  data-node={`settings-remove/${f.name}`}
-                  title="폴더 제거"
-                  onClick={() => void onRemove(f.path)}
-                >
-                  제거
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
       {adding && (
-        <div className="fp-add">
-          <input
-            className="fp-input"
-            data-node="add-path"
-            placeholder="폴더 절대경로 붙여넣기"
-            autoFocus
-            value={newPath}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPath(e.target.value)}
-            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === "Enter") void onAdd();
-              else if (e.key === "Escape") setAdding(false);
+        // 작은 모달 — 프로젝트 폴더의 *하위 폴더*를 골라 등록한다. 배경 클릭/Esc 로 닫힘.
+        <div
+          className="fp-modal-backdrop"
+          data-node="add-modal"
+          onClick={() => setAdding(false)}
+        >
+          <div
+            className="fp-modal"
+            role="dialog"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === "Escape") setAdding(false);
             }}
-          />
-          {err && <div className="fp-err" data-node="add-err">{err}</div>}
+          >
+            <div className="fp-modal-head">프로젝트 하위 폴더 선택</div>
+            <SubfolderPicker
+              app={app}
+              root={ctx.root}
+              registered={new Set(folders.map((f) => f.path))}
+              onPick={(p) => void onAddPath(p)}
+            />
+            {err && <div className="fp-err" data-node="add-err">{err}</div>}
+          </div>
         </div>
       )}
 
