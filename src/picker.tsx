@@ -137,7 +137,7 @@ export function FolderPicker({
     [absOf, applyDirs],
   );
 
-  // 최초: 루트의 하위 디렉토리 반영.
+  // 최초: 루트의 하위 디렉토리 반영(브라우즈 트리의 initialChildren 와 동치 — 루트는 펼침 없이 바로 로드).
   useEffect(() => {
     const list = appRef.current.fs?.list;
     if (!list) return;
@@ -172,5 +172,7 @@ export function FolderPicker({
     return model.subscribe(handle);
   }, [model, loadDir]);
 
+  // FileTree 단일 자식 — .fp-modal-tree(flex:1, min-height:120) 가 정의된 높이를 주어 내부 스크롤러가
+  // 높이를 얻는다. 형제 노드를 끼우면 height:100% 가 풀려 스크롤러가 0 높이로 접힌다(행은 있어도 비표시).
   return <FileTree className="fp-tree" style={themeStyles} model={model} />;
 }

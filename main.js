@@ -22513,7 +22513,7 @@ function FoldersView({
               if (e3.key === "Escape") closeModal();
             },
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-head", children: "\uD3F4\uB354 \uC120\uD0DD (\uD558\uC704 \uD3F4\uB354 \uD3BC\uCE58\uAE30)" }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-head", children: "\uD3F4\uB354 \uC120\uD0DD" }),
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-tree", "data-node": "add-tree", children: ctx.root ? /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
                 FolderPicker,
                 {
@@ -22641,8 +22641,10 @@ var GLOBAL_CSS = `
 .fp-modal-backdrop { position:absolute; inset:0; z-index:20; background:rgba(0,0,0,.35); display:flex; align-items:flex-start; justify-content:center; padding:38px 12px 12px; }
 .fp-modal { display:flex; flex-direction:column; width:100%; max-width:280px; max-height:100%; background:var(--bg); border:1px solid var(--bd); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.4); overflow:hidden; }
 .fp-modal-head { flex:0 0 auto; padding:8px 12px; font-size:12px; font-weight:600; color:var(--fg); border-bottom:1px solid var(--bd); }
-/* \uBAA8\uB2EC \uC548 \uD3F4\uB354 \uD2B8\uB9AC \uC601\uC5ED \u2014 \uC2A4\uD06C\uB864 \uCEE8\uD14C\uC774\uB108(\uD2B8\uB9AC\uB294 @pierre/trees). */
-.fp-modal-tree { flex:1; min-height:120px; max-height:340px; overflow:auto; padding:4px 0; }
+/* \uBAA8\uB2EC \uC548 \uD3F4\uB354 \uD2B8\uB9AC \uC601\uC5ED \u2014 \uC2A4\uD06C\uB864 \uCEE8\uD14C\uC774\uB108(\uD2B8\uB9AC\uB294 @pierre/trees). \uC815\uC758\uB41C height \uD544\uC218:
+   @pierre/trees \uC758 \uB0B4\uBD80 \uC2A4\uD06C\uB864\uB7EC\uB294 host(.fp-tree height:100%) \uAC00 % \uB192\uC774\uB97C \uD480 \uC218 \uC788\uC5B4\uC57C \uD589\uC744 \uADF8\uB9B0\uB2E4.
+   min-height \uB9CC \uC8FC\uBA74 \uBD80\uBAA8 height \uAC00 auto \uB77C % \uAC00 \uD480\uB9AC\uC9C0 \uC54A\uC544 \uC2A4\uD06C\uB864\uB7EC\uAC00 0 \uB192\uC774\uB85C \uC811\uD78C\uB2E4(\uD589 \uBE44\uD45C\uC2DC). */
+.fp-modal-tree { height:280px; overflow:auto; padding:4px 0; }
 .fp-modal-empty { padding:16px 12px; color:var(--fg3); font-size:11px; text-align:center; line-height:1.6; }
 /* \uBAA8\uB2EC \uD478\uD130 \u2014 \uC120\uD0DD\uB41C \uD3F4\uB354 \uACBD\uB85C + \uCD94\uAC00 \uBC84\uD2BC. */
 .fp-modal-foot { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--bd); }

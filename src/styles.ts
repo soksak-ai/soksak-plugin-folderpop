@@ -29,8 +29,10 @@ export const GLOBAL_CSS = `
 .fp-modal-backdrop { position:absolute; inset:0; z-index:20; background:rgba(0,0,0,.35); display:flex; align-items:flex-start; justify-content:center; padding:38px 12px 12px; }
 .fp-modal { display:flex; flex-direction:column; width:100%; max-width:280px; max-height:100%; background:var(--bg); border:1px solid var(--bd); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.4); overflow:hidden; }
 .fp-modal-head { flex:0 0 auto; padding:8px 12px; font-size:12px; font-weight:600; color:var(--fg); border-bottom:1px solid var(--bd); }
-/* 모달 안 폴더 트리 영역 — 스크롤 컨테이너(트리는 @pierre/trees). */
-.fp-modal-tree { flex:1; min-height:120px; max-height:340px; overflow:auto; padding:4px 0; }
+/* 모달 안 폴더 트리 영역 — 스크롤 컨테이너(트리는 @pierre/trees). 정의된 height 필수:
+   @pierre/trees 의 내부 스크롤러는 host(.fp-tree height:100%) 가 % 높이를 풀 수 있어야 행을 그린다.
+   min-height 만 주면 부모 height 가 auto 라 % 가 풀리지 않아 스크롤러가 0 높이로 접힌다(행 비표시). */
+.fp-modal-tree { height:280px; overflow:auto; padding:4px 0; }
 .fp-modal-empty { padding:16px 12px; color:var(--fg3); font-size:11px; text-align:center; line-height:1.6; }
 /* 모달 푸터 — 선택된 폴더 경로 + 추가 버튼. */
 .fp-modal-foot { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--bd); }

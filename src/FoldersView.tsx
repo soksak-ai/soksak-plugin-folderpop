@@ -254,7 +254,7 @@ export function FoldersView({
               if (e.key === "Escape") closeModal();
             }}
           >
-            <div className="fp-modal-head">폴더 선택 (하위 폴더 펼치기)</div>
+            <div className="fp-modal-head">폴더 선택</div>
             <div className="fp-modal-tree" data-node="add-tree">
               {ctx.root ? (
                 <FolderPicker
