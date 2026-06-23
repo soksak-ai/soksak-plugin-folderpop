@@ -1,12 +1,14 @@
-// folderpop 좌측 사이드바 뷰 — 등록 폴더 선택(chips) + 추가(프로젝트 하위폴더 선택 모달) + 활성 폴더 lazy 트리.
-// 데이터는 folders.ts(app.data 단일진실). app.data.kv.watch 로 멀티창/커맨드 변경을 자동 반영.
+// folderpop 좌측 사이드바 뷰 — 등록 폴더 선택(chips) + 추가(중첩 폴더 선택기) + 활성 폴더 lazy 트리.
+// 트리/선택기는 @pierre/trees(file-tree 와 동일 라이브러리) — 행 모양 동일. 데이터는 folders.ts
+// (app.data 단일진실). app.data.kv.watch 로 멀티창/커맨드 변경을 자동 반영.
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
   type KeyboardEvent,
 } from "react";
-import type { PluginApi, PluginViewContext, Listing } from "./host";
+import type { PluginApi, PluginViewContext } from "./host";
 import {
   type Folder,
   listFolders,
@@ -15,23 +17,23 @@ import {
   renameFolder,
   selectFolder,
 } from "./folders";
+import { LazyTree, detectDark, treeTheme } from "./tree";
+import { FolderPicker } from "./picker";
 
-type Child = { name: string; dir: boolean };
-
-const joinPath = (p: string, n: string) => `${p.replace(/\/+$/, "")}/${n}`;
-
-// 한 디렉터리의 자식들(lazy 로딩) — 디렉터리=DirNode(접기), 파일=행. 정렬은 코어 순서(file-tree 동일).
-// [RULE] 루트(활성 폴더)는 자기 노드 없이 자식을 *바로* 그린다(file-tree: project1 헤더 + 자식 직접).
-function FolderChildren({
+// 활성 폴더의 초기 자식(루트 직속). LazyTree 가 lazy 펼침을 이어받는다.
+function ActiveTree({
   app,
-  path,
-  depth,
+  rootAbs,
+  isDark,
 }: {
   app: PluginApi;
-  path: string;
-  depth: number;
+  rootAbs: string;
+  isDark: boolean;
 }) {
-  const [children, setChildren] = useState<Child[] | null>(null);
+  const [children, setChildren] = useState<
+    { name: string; dir: boolean }[] | null
+  >(null);
+  const theme = useMemo(() => treeTheme(isDark), [isDark]);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +42,8 @@ function FolderChildren({
       setChildren([]);
       return;
     }
-    void (list(path) as Promise<Listing>)
+    setChildren(null);
+    void (list(rootAbs) as Promise<{ children: { name: string; dir: boolean }[] }>)
       .then((l) => {
         if (!cancelled) setChildren(l.children);
       })
@@ -50,133 +53,27 @@ function FolderChildren({
     return () => {
       cancelled = true;
     };
-  }, [app, path]);
+  }, [app, rootAbs]);
 
-  const openFile = (filePath: string) => {
-    void app.commands?.execute("editor.open", { path: filePath });
-  };
+  const onOpenFile = useCallback(
+    (absPath: string) => {
+      void app.commands?.execute("editor.open", { path: absPath });
+    },
+    [app],
+  );
 
   if (children === null) {
-    return (
-      <div className="fp-row" style={{ paddingLeft: 6 + depth * 12 }}>
-        <span className="fp-nm" style={{ color: "var(--fg3)" }}>…</span>
-      </div>
-    );
+    return <div className="fp-msg">…</div>;
   }
   return (
-    <>
-      {children.map((c) =>
-        c.dir ? (
-          <DirNode key={c.name} app={app} path={joinPath(path, c.name)} name={c.name} depth={depth} />
-        ) : (
-          <div
-            key={c.name}
-            className="fp-row"
-            style={{ paddingLeft: 6 + depth * 12 }}
-            onClick={() => openFile(joinPath(path, c.name))}
-          >
-            <span className="fp-tw" />
-            <span className="fp-ic">📄</span>
-            <span className="fp-nm">{c.name}</span>
-          </div>
-        ),
-      )}
-    </>
-  );
-}
-
-// 하위 디렉터리 노드 — 폴더 행(접기) + 펼치면 자식(FolderChildren). 클릭=토글. 파일 열기는 editor.open.
-function DirNode({
-  app,
-  path,
-  name,
-  depth,
-}: {
-  app: PluginApi;
-  path: string;
-  name: string;
-  depth: number;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <div
-        className="fp-row"
-        style={{ paddingLeft: 6 + depth * 12 }}
-        data-node={`tree/${name}`}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span className="fp-tw">{open ? "▾" : "▸"}</span>
-        <span className="fp-ic">📁</span>
-        <span className="fp-nm">{name}</span>
-      </div>
-      {open && <FolderChildren app={app} path={path} depth={depth + 1} />}
-    </>
-  );
-}
-
-// 프로젝트 루트의 *하위 디렉터리*만 나열해 고른다(+ 모달 본문). 이미 등록된 폴더는 비활성.
-function SubfolderPicker({
-  app,
-  root,
-  registered,
-  onPick,
-}: {
-  app: PluginApi;
-  root: string | null;
-  registered: Set<string>;
-  onPick: (path: string) => void;
-}) {
-  const [dirs, setDirs] = useState<Child[] | null>(null);
-
-  useEffect(() => {
-    if (!root) {
-      setDirs([]);
-      return;
-    }
-    let cancelled = false;
-    const list = app.fs?.list;
-    if (!list) {
-      setDirs([]);
-      return;
-    }
-    void (list(root) as Promise<Listing>)
-      .then((l) => {
-        if (!cancelled) setDirs(l.children.filter((c) => c.dir));
-      })
-      .catch(() => {
-        if (!cancelled) setDirs([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [app, root]);
-
-  if (!root) return <div className="fp-modal-empty">프로젝트 폴더가 없습니다.</div>;
-  if (dirs === null) return <div className="fp-modal-empty">…</div>;
-  if (dirs.length === 0)
-    return <div className="fp-modal-empty">하위 폴더가 없습니다.</div>;
-
-  return (
-    <div className="fp-modal-list">
-      {dirs.map((d) => {
-        const path = joinPath(root, d.name);
-        const already = registered.has(path);
-        return (
-          <button
-            key={d.name}
-            className="fp-modal-item"
-            data-node={`add-pick/${d.name}`}
-            disabled={already}
-            onClick={() => onPick(path)}
-          >
-            <span className="fp-ic">📁</span>
-            <span className="fp-nm">{d.name}</span>
-            {already && <span className="fp-modal-tag">등록됨</span>}
-          </button>
-        );
-      })}
-    </div>
+    <LazyTree
+      key={rootAbs}
+      app={app}
+      rootAbs={rootAbs}
+      initialChildren={children}
+      onOpenFile={onOpenFile}
+      theme={theme}
+    />
   );
 }
 
@@ -192,6 +89,9 @@ export function FoldersView({
   const [adding, setAdding] = useState(false);
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(detectDark);
+  // 추가 모달에서 선택된 폴더 절대경로(임의 깊이). null = 선택 없음/등록됨 → 추가 비활성.
+  const [pick, setPick] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const list = await listFolders(app);
@@ -206,12 +106,22 @@ export function FoldersView({
     return () => un?.dispose();
   }, [reload, app]);
 
-  // + 모달에서 고른 하위폴더를 등록. 실패(중복 등)는 모달 안에 표시.
+  // 호스트 테마 추종 — @pierre/trees 테마 입력 갱신(행 색 동기화).
+  useEffect(() => {
+    const off = app.events.on("theme.changed", (p) => {
+      const mode = (p as { mode?: string })?.mode;
+      if (mode === "dark" || mode === "light") setIsDark(mode === "dark");
+    });
+    return () => off.dispose();
+  }, [app]);
+
+  // + 모달에서 고른 폴더(임의 깊이)를 등록. 실패(중복 등)는 모달 안에 표시.
   const onAddPath = async (path: string) => {
     setErr(null);
     try {
       await addFolder(app, path);
       setAdding(false);
+      setPick(null);
       await reload();
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -227,10 +137,26 @@ export function FoldersView({
     await reload();
   };
 
+  const openModal = () => {
+    setErr(null);
+    setPick(null);
+    setAdding(true);
+  };
+  const closeModal = () => {
+    setAdding(false);
+    setPick(null);
+  };
+
+  const registered = useMemo(
+    () => new Set(folders.map((f) => f.path)),
+    [folders],
+  );
+  const pickerTheme = useMemo(() => treeTheme(isDark), [isDark]);
+
   return (
     <div className="fp-root">
-      {/* 폴더 선택 탭 줄 — 코어 콘텐츠 뷰 탭 구성과 동일: boxed 탭 + 닫기 + 끝에 추가.
-          더블클릭 = 이름 인라인 편집(박스 안 박스 금지), + = 폴더 추가(경로 입력 행 토글). */}
+      {/* 폴더 선택 탭 줄 — 코어 콘텐츠 뷰 탭 구성과 동일: boxed 탭 + 끝에 추가.
+          더블클릭 = 이름 인라인 편집(박스 안 박스 금지), + = 폴더 추가(중첩 선택기 모달). */}
       <div className="fp-tabs">
         {folders.map((f) =>
           editingPath === f.path ? (
@@ -268,47 +194,73 @@ export function FoldersView({
           className="fp-tab-add"
           data-node="add-btn"
           title="폴더 추가"
-          onClick={() => {
-            setErr(null);
-            setAdding(true);
-          }}
+          onClick={openModal}
         >
           +
         </button>
       </div>
 
       {adding && (
-        // 작은 모달 — 프로젝트 폴더의 *하위 폴더*를 골라 등록한다. 배경 클릭/Esc 로 닫힘.
+        // 작은 모달 — 프로젝트 루트에서 *임의 깊이*의 폴더를 펼쳐 골라 등록. 배경 클릭/Esc 로 닫힘.
         <div
           className="fp-modal-backdrop"
           data-node="add-modal"
-          onClick={() => setAdding(false)}
+          onClick={closeModal}
         >
           <div
             className="fp-modal"
             role="dialog"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
-              if (e.key === "Escape") setAdding(false);
+              if (e.key === "Escape") closeModal();
             }}
           >
-            <div className="fp-modal-head">프로젝트 하위 폴더 선택</div>
-            <SubfolderPicker
-              app={app}
-              root={ctx.root}
-              registered={new Set(folders.map((f) => f.path))}
-              onPick={(p) => void onAddPath(p)}
-            />
-            {err && <div className="fp-err" data-node="add-err">{err}</div>}
+            <div className="fp-modal-head">폴더 선택 (하위 폴더 펼치기)</div>
+            <div className="fp-modal-tree" data-node="add-tree">
+              {ctx.root ? (
+                <FolderPicker
+                  key={`${ctx.root}|${folders.length}`}
+                  app={app}
+                  rootAbs={ctx.root}
+                  registered={registered}
+                  theme={pickerTheme}
+                  onPick={setPick}
+                />
+              ) : (
+                <div className="fp-modal-empty">프로젝트 폴더가 없습니다.</div>
+              )}
+            </div>
+            {err && (
+              <div className="fp-err" data-node="add-err">
+                {err}
+              </div>
+            )}
+            <div className="fp-modal-foot">
+              <span className="fp-modal-pick" title={pick ?? undefined}>
+                {pick ?? "폴더를 선택하세요"}
+              </span>
+              <button
+                className="fp-modal-add"
+                data-node="add-confirm"
+                disabled={!pick}
+                onClick={() => pick && void onAddPath(pick)}
+              >
+                추가
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       <div className="fp-body">
         {active ? (
-          // 활성 폴더의 자식을 *바로* 그린다(루트 노드 없음 — file-tree 와 동일 구조). key=path: 폴더
-          // 전환 시 remount.
-          <FolderChildren key={active.path} app={app} path={active.path} depth={0} />
+          // 활성 폴더의 자식을 바로 그린다(루트 노드 없음). key=path: 폴더 전환 시 remount.
+          <ActiveTree
+            key={active.path}
+            app={app}
+            rootAbs={active.path}
+            isDark={isDark}
+          />
         ) : (
           <div className="fp-empty">
             등록된 폴더가 없습니다.
