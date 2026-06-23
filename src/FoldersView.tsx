@@ -16,6 +16,7 @@ import {
   activeFolder,
   addFolder,
   renameFolder,
+  removeFolder,
   selectFolder,
 } from "./folders";
 import { LazyTree, detectDark, treeTheme } from "./tree";
@@ -93,6 +94,8 @@ export function FoldersView({
   const [isDark, setIsDark] = useState(detectDark);
   // 추가 모달에서 선택된 폴더 절대경로(임의 깊이). null = 선택 없음/등록됨 → 추가 비활성.
   const [pick, setPick] = useState<string | null>(null);
+  // 제거 확인 모달 대상 폴더. null = 모달 닫힘.
+  const [removing, setRemoving] = useState<Folder | null>(null);
   // 활성 칩 DOM 참조 — 활성 폴더 변경(및 마운트) 시 칩 줄을 가로 중앙으로 스크롤.
   const activeChipRef = useRef<HTMLDivElement | null>(null);
 
@@ -149,6 +152,13 @@ export function FoldersView({
     await selectFolder(app, path);
     await reload();
   };
+  // 확인된 제거 — 데이터 레이어 removeFolder(=folder.remove 커맨드와 동일 경로). 활성이던 폴더면
+  // removeFolder 가 활성을 첫 폴더로 보정. app.data 동기화로 칩은 reactively 사라진다(수동 splice 금지).
+  const onRemove = async (path: string) => {
+    await removeFolder(app, path);
+    setRemoving(null);
+    await reload();
+  };
 
   const openModal = () => {
     setErr(null);
@@ -199,9 +209,23 @@ export function FoldersView({
               title={f.path}
               onClick={() => void onSelect(f.path)}
               onDoubleClick={() => setEditingPath(f.path)}
-              // 칩은 폴더 *선택/이름변경(더블클릭)*만 — 제거 기능 없음(파괴적 동작 미제공).
+              // 칩 = 폴더 선택(클릭)/이름변경(더블클릭). 끝의 × = 제거 확인 모달(stopPropagation 으로
+              // 칩 선택·더블클릭과 분리). 실제 제거는 확인 후 onRemove → removeFolder.
             >
               <span className="fp-tab-title">{f.name}</span>
+              <button
+                className="fp-tab-x"
+                data-node={`chip-remove/${f.name}`}
+                title="폴더 제거"
+                // × 클릭은 칩 select/rename 으로 새지 않게 차단 — 제거 확인 모달만 연다.
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRemoving(f);
+                }}
+                onDoubleClick={(e) => e.stopPropagation()}
+              >
+                ×
+              </button>
             </div>
           ),
         )}
@@ -261,6 +285,52 @@ export function FoldersView({
                 onClick={() => pick && void onAddPath(pick)}
               >
                 추가
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {removing && (
+        // 제거 확인 모달 — 추가 모달과 동일한 fp-modal-* 크롬 재사용. 배경 클릭/Esc/취소 = 닫기(미제거).
+        // 제거 = onRemove → removeFolder(파괴적). 표시명 + 경로를 함께 보여 오제거 방지.
+        <div
+          className="fp-modal-backdrop"
+          data-node="remove-modal"
+          onClick={() => setRemoving(null)}
+        >
+          <div
+            className="fp-modal"
+            role="dialog"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === "Escape") setRemoving(null);
+            }}
+          >
+            <div className="fp-modal-head">폴더 제거</div>
+            <div className="fp-modal-confirm">
+              <div className="fp-modal-confirm-name">{removing.name}</div>
+              <div className="fp-modal-confirm-path" title={removing.path}>
+                {removing.path}
+              </div>
+              <div className="fp-modal-confirm-msg">
+                목록에서 이 폴더를 제거합니다. (파일은 삭제되지 않습니다)
+              </div>
+            </div>
+            <div className="fp-modal-foot fp-modal-foot-end">
+              <button
+                className="fp-modal-cancel"
+                data-node="remove-cancel"
+                onClick={() => setRemoving(null)}
+              >
+                취소
+              </button>
+              <button
+                className="fp-modal-danger"
+                data-node="remove-confirm"
+                onClick={() => void onRemove(removing.path)}
+              >
+                제거
               </button>
             </div>
           </div>

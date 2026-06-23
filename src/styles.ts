@@ -7,10 +7,14 @@ export const GLOBAL_CSS = `
    계약(--header-h=33, 콘텐츠 그룹 헤더와 동일 단), 칩은 24px(콘텐츠 뷰 탭과 동일). 자기 fp-* 만. */
 .fp-tabs { flex:0 0 auto; height:var(--header-h, 33px); display:flex; align-items:center; gap:2px; padding:0 6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--bd); }
 .fp-tabs::-webkit-scrollbar { display:none; }
-.fp-tab { flex:none; height:24px; display:flex; align-items:center; padding:0 10px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
+.fp-tab { flex:none; height:24px; display:flex; align-items:center; gap:4px; padding:0 6px 0 10px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
 .fp-tab:hover { background:var(--inset, rgba(127,127,127,.16)); }
 .fp-tab.active { font-weight:600; background:var(--card, rgba(127,127,127,.24)); border-color:var(--bd); color:var(--fg); }
 .fp-tab-title { overflow:hidden; text-overflow:ellipsis; }
+/* 칩 제거(×) — 코어 콘텐츠 탭의 닫기 affordance 와 동일: 작고 muted, hover 강조. 칩 끝에 붙는다.
+   클릭은 FoldersView 에서 stopPropagation(칩 select/rename 으로 새지 않음). */
+.fp-tab-x { flex:none; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border:none; border-radius:4px; background:transparent; color:var(--fg3); cursor:pointer; font-size:13px; line-height:1; padding:0; }
+.fp-tab-x:hover { color:var(--fg); background:var(--inset, rgba(127,127,127,.24)); }
 .fp-tab-rename { flex:none; min-width:0; max-width:160px; border:none; border-radius:6px; background:var(--inset); color:var(--fg); font-size:12px; padding:0 8px; outline:1px solid var(--acc); outline-offset:-1px; }
 /* 추가(+) — 정사각 아이콘 버튼(flex 중앙정렬). 누르면 중첩 폴더 선택기 모달. */
 .fp-tab-add { flex:none; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:none; border-radius:6px; background:transparent; color:var(--fg3); cursor:pointer; font-size:16px; line-height:1; padding:0; }
@@ -30,8 +34,20 @@ export const GLOBAL_CSS = `
 .fp-modal-empty { padding:16px 12px; color:var(--fg3); font-size:11px; text-align:center; line-height:1.6; }
 /* 모달 푸터 — 선택된 폴더 경로 + 추가 버튼. */
 .fp-modal-foot { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--bd); }
+/* 확인 모달 푸터 — 버튼 2개를 오른쪽 정렬(추가 모달의 pick 스페이서 대신). */
+.fp-modal-foot-end { justify-content:flex-end; }
 .fp-modal-pick { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:left; font-size:11px; color:var(--fg3); }
 .fp-modal-add { flex:none; padding:5px 14px; border:1px solid var(--bd); border-radius:6px; background:var(--inset, rgba(127,127,127,.16)); color:var(--fg); cursor:pointer; font-size:12px; }
 .fp-modal-add:hover:not(:disabled) { background:var(--card, rgba(127,127,127,.24)); }
 .fp-modal-add:disabled { opacity:.45; cursor:default; }
+/* 제거 확인 모달 본문 — 표시명(강조) + 경로(muted, ellipsis) + 안내문. fp-modal-* 크롬 재사용. */
+.fp-modal-confirm { flex:0 0 auto; padding:12px; display:flex; flex-direction:column; gap:4px; }
+.fp-modal-confirm-name { font-size:13px; font-weight:600; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fp-modal-confirm-path { font-size:11px; color:var(--fg3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:left; }
+.fp-modal-confirm-msg { margin-top:4px; font-size:11px; color:var(--fg3); line-height:1.5; }
+/* 취소 = 중립(추가 버튼과 동일 톤). 제거 = 파괴적 강조(danger 텍스트, hover 시 채움). 호스트 var 만. */
+.fp-modal-cancel { flex:none; padding:5px 14px; border:1px solid var(--bd); border-radius:6px; background:transparent; color:var(--fg); cursor:pointer; font-size:12px; }
+.fp-modal-cancel:hover { background:var(--inset, rgba(127,127,127,.16)); }
+.fp-modal-danger { flex:none; padding:5px 14px; border:1px solid var(--danger, #e66); border-radius:6px; background:transparent; color:var(--danger, #e66); cursor:pointer; font-size:12px; font-weight:600; }
+.fp-modal-danger:hover { background:var(--danger, #e66); color:var(--bg); }
 `;

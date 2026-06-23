@@ -22370,6 +22370,7 @@ function FoldersView({
   const [err, setErr] = (0, import_react7.useState)(null);
   const [isDark, setIsDark] = (0, import_react7.useState)(detectDark);
   const [pick, setPick] = (0, import_react7.useState)(null);
+  const [removing, setRemoving] = (0, import_react7.useState)(null);
   const activeChipRef = (0, import_react7.useRef)(null);
   const reload = (0, import_react7.useCallback)(async () => {
     const list = await listFolders(app);
@@ -22414,6 +22415,11 @@ function FoldersView({
     await selectFolder(app, path);
     await reload();
   };
+  const onRemove = async (path) => {
+    await removeFolder(app, path);
+    setRemoving(null);
+    await reload();
+  };
   const openModal = () => {
     setErr(null);
     setPick(null);
@@ -22449,7 +22455,7 @@ function FoldersView({
             }
           },
           f4.path
-        ) : /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        ) : /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
           "div",
           {
             ref: active?.path === f4.path ? activeChipRef : void 0,
@@ -22458,7 +22464,23 @@ function FoldersView({
             title: f4.path,
             onClick: () => void onSelect(f4.path),
             onDoubleClick: () => setEditingPath(f4.path),
-            children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "fp-tab-title", children: f4.name })
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "fp-tab-title", children: f4.name }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                "button",
+                {
+                  className: "fp-tab-x",
+                  "data-node": `chip-remove/${f4.name}`,
+                  title: "\uD3F4\uB354 \uC81C\uAC70",
+                  onClick: (e3) => {
+                    e3.stopPropagation();
+                    setRemoving(f4);
+                  },
+                  onDoubleClick: (e3) => e3.stopPropagation(),
+                  children: "\xD7"
+                }
+              )
+            ]
           },
           f4.path
         )
@@ -22522,6 +22544,55 @@ function FoldersView({
         )
       }
     ),
+    removing && // 제거 확인 모달 — 추가 모달과 동일한 fp-modal-* 크롬 재사용. 배경 클릭/Esc/취소 = 닫기(미제거).
+    // 제거 = onRemove → removeFolder(파괴적). 표시명 + 경로를 함께 보여 오제거 방지.
+    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      "div",
+      {
+        className: "fp-modal-backdrop",
+        "data-node": "remove-modal",
+        onClick: () => setRemoving(null),
+        children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+          "div",
+          {
+            className: "fp-modal",
+            role: "dialog",
+            onClick: (e3) => e3.stopPropagation(),
+            onKeyDown: (e3) => {
+              if (e3.key === "Escape") setRemoving(null);
+            },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-head", children: "\uD3F4\uB354 \uC81C\uAC70" }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "fp-modal-confirm", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-confirm-name", children: removing.name }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-confirm-path", title: removing.path, children: removing.path }),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-modal-confirm-msg", children: "\uBAA9\uB85D\uC5D0\uC11C \uC774 \uD3F4\uB354\uB97C \uC81C\uAC70\uD569\uB2C8\uB2E4. (\uD30C\uC77C\uC740 \uC0AD\uC81C\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4)" })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "fp-modal-foot fp-modal-foot-end", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                  "button",
+                  {
+                    className: "fp-modal-cancel",
+                    "data-node": "remove-cancel",
+                    onClick: () => setRemoving(null),
+                    children: "\uCDE8\uC18C"
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                  "button",
+                  {
+                    className: "fp-modal-danger",
+                    "data-node": "remove-confirm",
+                    onClick: () => void onRemove(removing.path),
+                    children: "\uC81C\uAC70"
+                  }
+                )
+              ] })
+            ]
+          }
+        )
+      }
+    ),
     /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "fp-body", children: active ? (
       // 활성 폴더의 자식을 바로 그린다(루트 노드 없음). key=path: 폴더 전환 시 remount.
       /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
@@ -22548,10 +22619,14 @@ var GLOBAL_CSS = `
    \uACC4\uC57D(--header-h=33, \uCF58\uD150\uCE20 \uADF8\uB8F9 \uD5E4\uB354\uC640 \uB3D9\uC77C \uB2E8), \uCE69\uC740 24px(\uCF58\uD150\uCE20 \uBDF0 \uD0ED\uACFC \uB3D9\uC77C). \uC790\uAE30 fp-* \uB9CC. */
 .fp-tabs { flex:0 0 auto; height:var(--header-h, 33px); display:flex; align-items:center; gap:2px; padding:0 6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--bd); }
 .fp-tabs::-webkit-scrollbar { display:none; }
-.fp-tab { flex:none; height:24px; display:flex; align-items:center; padding:0 10px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
+.fp-tab { flex:none; height:24px; display:flex; align-items:center; gap:4px; padding:0 6px 0 10px; border-radius:6px; font-size:12px; border:1px solid transparent; background:transparent; color:var(--fg2, var(--fg)); cursor:pointer; white-space:nowrap; max-width:160px; box-sizing:border-box; }
 .fp-tab:hover { background:var(--inset, rgba(127,127,127,.16)); }
 .fp-tab.active { font-weight:600; background:var(--card, rgba(127,127,127,.24)); border-color:var(--bd); color:var(--fg); }
 .fp-tab-title { overflow:hidden; text-overflow:ellipsis; }
+/* \uCE69 \uC81C\uAC70(\xD7) \u2014 \uCF54\uC5B4 \uCF58\uD150\uCE20 \uD0ED\uC758 \uB2EB\uAE30 affordance \uC640 \uB3D9\uC77C: \uC791\uACE0 muted, hover \uAC15\uC870. \uCE69 \uB05D\uC5D0 \uBD99\uB294\uB2E4.
+   \uD074\uB9AD\uC740 FoldersView \uC5D0\uC11C stopPropagation(\uCE69 select/rename \uC73C\uB85C \uC0C8\uC9C0 \uC54A\uC74C). */
+.fp-tab-x { flex:none; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border:none; border-radius:4px; background:transparent; color:var(--fg3); cursor:pointer; font-size:13px; line-height:1; padding:0; }
+.fp-tab-x:hover { color:var(--fg); background:var(--inset, rgba(127,127,127,.24)); }
 .fp-tab-rename { flex:none; min-width:0; max-width:160px; border:none; border-radius:6px; background:var(--inset); color:var(--fg); font-size:12px; padding:0 8px; outline:1px solid var(--acc); outline-offset:-1px; }
 /* \uCD94\uAC00(+) \u2014 \uC815\uC0AC\uAC01 \uC544\uC774\uCF58 \uBC84\uD2BC(flex \uC911\uC559\uC815\uB82C). \uB204\uB974\uBA74 \uC911\uCCA9 \uD3F4\uB354 \uC120\uD0DD\uAE30 \uBAA8\uB2EC. */
 .fp-tab-add { flex:none; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:none; border-radius:6px; background:transparent; color:var(--fg3); cursor:pointer; font-size:16px; line-height:1; padding:0; }
@@ -22571,10 +22646,22 @@ var GLOBAL_CSS = `
 .fp-modal-empty { padding:16px 12px; color:var(--fg3); font-size:11px; text-align:center; line-height:1.6; }
 /* \uBAA8\uB2EC \uD478\uD130 \u2014 \uC120\uD0DD\uB41C \uD3F4\uB354 \uACBD\uB85C + \uCD94\uAC00 \uBC84\uD2BC. */
 .fp-modal-foot { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--bd); }
+/* \uD655\uC778 \uBAA8\uB2EC \uD478\uD130 \u2014 \uBC84\uD2BC 2\uAC1C\uB97C \uC624\uB978\uCABD \uC815\uB82C(\uCD94\uAC00 \uBAA8\uB2EC\uC758 pick \uC2A4\uD398\uC774\uC11C \uB300\uC2E0). */
+.fp-modal-foot-end { justify-content:flex-end; }
 .fp-modal-pick { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:left; font-size:11px; color:var(--fg3); }
 .fp-modal-add { flex:none; padding:5px 14px; border:1px solid var(--bd); border-radius:6px; background:var(--inset, rgba(127,127,127,.16)); color:var(--fg); cursor:pointer; font-size:12px; }
 .fp-modal-add:hover:not(:disabled) { background:var(--card, rgba(127,127,127,.24)); }
 .fp-modal-add:disabled { opacity:.45; cursor:default; }
+/* \uC81C\uAC70 \uD655\uC778 \uBAA8\uB2EC \uBCF8\uBB38 \u2014 \uD45C\uC2DC\uBA85(\uAC15\uC870) + \uACBD\uB85C(muted, ellipsis) + \uC548\uB0B4\uBB38. fp-modal-* \uD06C\uB86C \uC7AC\uC0AC\uC6A9. */
+.fp-modal-confirm { flex:0 0 auto; padding:12px; display:flex; flex-direction:column; gap:4px; }
+.fp-modal-confirm-name { font-size:13px; font-weight:600; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fp-modal-confirm-path { font-size:11px; color:var(--fg3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:left; }
+.fp-modal-confirm-msg { margin-top:4px; font-size:11px; color:var(--fg3); line-height:1.5; }
+/* \uCDE8\uC18C = \uC911\uB9BD(\uCD94\uAC00 \uBC84\uD2BC\uACFC \uB3D9\uC77C \uD1A4). \uC81C\uAC70 = \uD30C\uAD34\uC801 \uAC15\uC870(danger \uD14D\uC2A4\uD2B8, hover \uC2DC \uCC44\uC6C0). \uD638\uC2A4\uD2B8 var \uB9CC. */
+.fp-modal-cancel { flex:none; padding:5px 14px; border:1px solid var(--bd); border-radius:6px; background:transparent; color:var(--fg); cursor:pointer; font-size:12px; }
+.fp-modal-cancel:hover { background:var(--inset, rgba(127,127,127,.16)); }
+.fp-modal-danger { flex:none; padding:5px 14px; border:1px solid var(--danger, #e66); border-radius:6px; background:transparent; color:var(--danger, #e66); cursor:pointer; font-size:12px; font-weight:600; }
+.fp-modal-danger:hover { background:var(--danger, #e66); color:var(--bg); }
 `;
 
 // src/commands.ts
