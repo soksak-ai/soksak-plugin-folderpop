@@ -22400,6 +22400,7 @@ function FoldersView({
     setErr(null);
     try {
       await addFolder(app, path);
+      await selectFolder(app, path);
       setAdding(false);
       setPick(null);
       await reload();

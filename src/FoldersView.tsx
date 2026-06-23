@@ -131,11 +131,14 @@ export function FoldersView({
     });
   }, [active?.path, folders]);
 
-  // + 모달에서 고른 폴더(임의 깊이)를 등록. 실패(중복 등)는 모달 안에 표시.
+  // + 모달에서 고른 폴더(임의 깊이)를 등록 후 그 폴더를 활성으로 — 칩 포커스 + ActiveTree 가 바로 새 폴더를
+  // 비춘다(chip 클릭과 동일 selectFolder). addFolder 는 첫 폴더만 자동 활성이라 둘째 이후엔 직접 선택 필요.
+  // 실패(중복 등)는 모달 안에 표시.
   const onAddPath = async (path: string) => {
     setErr(null);
     try {
       await addFolder(app, path);
+      await selectFolder(app, path);
       setAdding(false);
       setPick(null);
       await reload();
