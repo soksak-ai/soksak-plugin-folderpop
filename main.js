@@ -22370,6 +22370,7 @@ function FoldersView({
   const [err, setErr] = (0, import_react7.useState)(null);
   const [isDark, setIsDark] = (0, import_react7.useState)(detectDark);
   const [pick, setPick] = (0, import_react7.useState)(null);
+  const activeChipRef = (0, import_react7.useRef)(null);
   const reload = (0, import_react7.useCallback)(async () => {
     const list = await listFolders(app);
     setFolders(list);
@@ -22387,6 +22388,13 @@ function FoldersView({
     });
     return () => off.dispose();
   }, [app]);
+  (0, import_react7.useEffect)(() => {
+    activeChipRef.current?.scrollIntoView({
+      inline: "center",
+      block: "nearest",
+      behavior: "auto"
+    });
+  }, [active?.path, folders]);
   const onAddPath = async (path) => {
     setErr(null);
     try {
@@ -22444,6 +22452,7 @@ function FoldersView({
         ) : /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
           "div",
           {
+            ref: active?.path === f4.path ? activeChipRef : void 0,
             className: `fp-tab${active?.path === f4.path ? " active" : ""}`,
             "data-node": `chip/${f4.name}`,
             title: f4.path,

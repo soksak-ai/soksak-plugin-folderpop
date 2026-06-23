@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent,
 } from "react";
@@ -92,6 +93,8 @@ export function FoldersView({
   const [isDark, setIsDark] = useState(detectDark);
   // 추가 모달에서 선택된 폴더 절대경로(임의 깊이). null = 선택 없음/등록됨 → 추가 비활성.
   const [pick, setPick] = useState<string | null>(null);
+  // 활성 칩 DOM 참조 — 활성 폴더 변경(및 마운트) 시 칩 줄을 가로 중앙으로 스크롤.
+  const activeChipRef = useRef<HTMLDivElement | null>(null);
 
   const reload = useCallback(async () => {
     const list = await listFolders(app);
@@ -114,6 +117,16 @@ export function FoldersView({
     });
     return () => off.dispose();
   }, [app]);
+
+  // 활성 칩을 가로 중앙으로 — 폴더 전환(및 마운트/목록 변경) 시 칩 줄을 스크롤.
+  // 모두 보이면(넘침 없음) 무해한 no-op. 애니메이션 불필요(behavior:auto).
+  useEffect(() => {
+    activeChipRef.current?.scrollIntoView({
+      inline: "center",
+      block: "nearest",
+      behavior: "auto",
+    });
+  }, [active?.path, folders]);
 
   // + 모달에서 고른 폴더(임의 깊이)를 등록. 실패(중복 등)는 모달 안에 표시.
   const onAddPath = async (path: string) => {
@@ -179,6 +192,8 @@ export function FoldersView({
           ) : (
             <div
               key={f.path}
+              // 활성 칩에만 ref 부착 — 중앙 스크롤 대상.
+              ref={active?.path === f.path ? activeChipRef : undefined}
               className={`fp-tab${active?.path === f.path ? " active" : ""}`}
               data-node={`chip/${f.name}`}
               title={f.path}
