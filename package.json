@@ -8,7 +8,8 @@
     "build": "node build.mjs",
     "dev": "node build.mjs --watch",
     "typecheck": "tsc --noEmit",
-    "verify": "tsc --noEmit && node build.mjs"
+    "verify": "tsc --noEmit && node build.mjs",
+    "prepublishOnly": "node build.mjs && npx --yes soksak-plugin-doctor ."
   },
   "dependencies": {
     "@pierre/trees": "1.0.0-beta.4",

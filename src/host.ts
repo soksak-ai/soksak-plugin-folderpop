@@ -29,6 +29,8 @@ export interface PluginCommandSpec {
   triggers?: Record<string, string>;
   params?: Record<string, ParamSpec>;
   returns?: string;
+  // 성공 데이터로 사람이 읽을 결과 한 문장을 만든다(코어 message 프로토콜).
+  message?: (data: any) => string;
   handler: (params: Record<string, unknown>) => Promise<object> | object;
 }
 

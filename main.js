@@ -22675,12 +22675,14 @@ function registerCommands(ctx) {
   const push = (name, spec) => ctx.subscriptions.push(reg(name, spec));
   push("ping", {
     description: "Load/version check (E2E).",
+    message: (d3) => `\uD3F4\uB354\uD31D ${d3.version} \uC801\uC7AC\uB428.`,
     handler: async () => ({ ok: true, plugin: "soksak-plugin-folderpop", version: "0.0.1" })
   });
   push("folder.list", {
     description: "List registered folders and the active folder path.",
     triggers: { ko: "\uD3F4\uB354 \uBAA9\uB85D \uB4F1\uB85D\uD3F4\uB354 \uD3F4\uB354\uD31D \uBAA9\uB85D" },
     returns: "{ ok, folders:[{path,name}], active }",
+    message: (d3) => `${(d3.folders ?? []).length}\uAC1C \uD3F4\uB354\uAC00 \uB4F1\uB85D\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.`,
     handler: async () => ({
       ok: true,
       folders: await listFolders(app),
@@ -22695,12 +22697,13 @@ function registerCommands(ctx) {
       name: { type: "string", description: "Display name (default: folder name)" }
     },
     returns: "{ ok, folder }",
+    message: (d3) => `${d3.folder?.name}\uC744(\uB97C) \uB4F1\uB85D\uD588\uC2B5\uB2C8\uB2E4.`,
     handler: async (p3) => {
       try {
         const folder = await addFolder(app, p3.path, p3.name);
         return { ok: true, folder };
       } catch (e3) {
-        return { ok: false, error: e3 instanceof Error ? e3.message : String(e3) };
+        return { ok: false, code: "INVALID_INPUT", message: e3 instanceof Error ? e3.message : String(e3) };
       }
     }
   });
@@ -22709,6 +22712,7 @@ function registerCommands(ctx) {
     triggers: { ko: "\uD3F4\uB354 \uC81C\uAC70 \uC0AD\uC81C \uB4F1\uB85D\uD574\uC81C" },
     params: { path: { type: "string", description: "Folder path", required: true } },
     returns: "{ ok }",
+    message: () => "\uD3F4\uB354\uB97C \uC81C\uAC70\uD588\uC2B5\uB2C8\uB2E4.",
     handler: async (p3) => {
       await removeFolder(app, p3.path);
       return { ok: true };
@@ -22722,9 +22726,10 @@ function registerCommands(ctx) {
       name: { type: "string", description: "New display name; empty resets", required: true }
     },
     returns: "{ ok, folder }",
+    message: (d3) => `${d3.folder?.name}(\uC73C)\uB85C \uC774\uB984\uC744 \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.`,
     handler: async (p3) => {
       const folder = await renameFolder(app, p3.path, p3.name);
-      return folder ? { ok: true, folder } : { ok: false, error: "\uD3F4\uB354 \uC5C6\uC74C" };
+      return folder ? { ok: true, folder } : { ok: false, code: "NOT_FOUND", message: "\uD3F4\uB354 \uC5C6\uC74C" };
     }
   });
   push("folder.select", {
@@ -22732,9 +22737,10 @@ function registerCommands(ctx) {
     triggers: { ko: "\uD3F4\uB354 \uC120\uD0DD \uD65C\uC131 \uC804\uD658" },
     params: { path: { type: "string", description: "Folder path", required: true } },
     returns: "{ ok }",
+    message: () => "\uD65C\uC131 \uD3F4\uB354\uB97C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.",
     handler: async (p3) => {
       const ok = await selectFolder(app, p3.path);
-      return ok ? { ok: true } : { ok: false, error: "\uB4F1\uB85D\uB418\uC9C0 \uC54A\uC740 \uD3F4\uB354" };
+      return ok ? { ok: true } : { ok: false, code: "NOT_FOUND", message: "\uB4F1\uB85D\uB418\uC9C0 \uC54A\uC740 \uD3F4\uB354" };
     }
   });
 }
