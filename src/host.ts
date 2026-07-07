@@ -31,6 +31,11 @@ export interface PluginCommandSpec {
   returns?: string;
   // 성공 데이터로 사람이 읽을 결과 한 문장을 만든다(코어 message 프로토콜).
   message?: (data: any) => string;
+  // 다음 단계로 제안할 명령(코어와 동형). 상한 3.
+  hint?: (
+    data: Record<string, unknown>,
+    ctx: Record<string, unknown>,
+  ) => Array<{ cmd: string; why: string }>;
   handler: (params: Record<string, unknown>) => Promise<object> | object;
 }
 

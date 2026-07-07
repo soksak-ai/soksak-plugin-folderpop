@@ -52,6 +52,16 @@ export function registerCommands(ctx: PluginContext): void {
         return { ok: false, code: "INVALID_INPUT", message: e instanceof Error ? e.message : String(e) };
       }
     },
+    // 등록만으로는 활성이 되지 않을 수 있음(첫 폴더가 아니면) — 활성 전환을 제시(add→select 사이클).
+    hint: (d) =>
+      d.ok && (d.folder as { path?: unknown } | undefined)?.path
+        ? [
+            {
+              cmd: `sok plugin.soksak-plugin-folderpop.folder.select {"path":"${(d.folder as { path: string }).path}"}`,
+              why: "등록한 폴더를 활성 폴더로 전환할 수 있습니다",
+            },
+          ]
+        : [],
   });
 
   push("folder.remove", {

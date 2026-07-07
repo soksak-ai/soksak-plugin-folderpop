@@ -22705,7 +22705,14 @@ function registerCommands(ctx) {
       } catch (e3) {
         return { ok: false, code: "INVALID_INPUT", message: e3 instanceof Error ? e3.message : String(e3) };
       }
-    }
+    },
+    // 등록만으로는 활성이 되지 않을 수 있음(첫 폴더가 아니면) — 활성 전환을 제시(add→select 사이클).
+    hint: (d3) => d3.ok && d3.folder?.path ? [
+      {
+        cmd: `sok plugin.soksak-plugin-folderpop.folder.select {"path":"${d3.folder.path}"}`,
+        why: "\uB4F1\uB85D\uD55C \uD3F4\uB354\uB97C \uD65C\uC131 \uD3F4\uB354\uB85C \uC804\uD658\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4"
+      }
+    ] : []
   });
   push("folder.remove", {
     description: "Unregister a folder by path.",
