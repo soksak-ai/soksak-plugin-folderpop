@@ -23,7 +23,7 @@ export function registerCommands(ctx: PluginContext): void {
     handler: async () => ({ ok: true, plugin: "soksak-plugin-folderpop", version: "0.0.1" }),
   });
 
-  push("folder.list", {
+  push("list", {
     description: "List registered folders and the active folder path.",
     triggers: { ko: "폴더 목록 등록폴더 폴더팝 목록" },
     returns: "{ ok, folders:[{path,name}], active }",
@@ -35,7 +35,7 @@ export function registerCommands(ctx: PluginContext): void {
     }),
   });
 
-  push("folder.add", {
+  push("add", {
     description: "Register a folder by absolute path (validated as a directory). Name defaults to the folder name.",
     triggers: { ko: "폴더 등록 추가 폴더팝 폴더추가" },
     params: {
@@ -57,14 +57,14 @@ export function registerCommands(ctx: PluginContext): void {
       d.ok && (d.folder as { path?: unknown } | undefined)?.path
         ? [
             {
-              cmd: `sok plugin.soksak-plugin-folderpop.folder.select {"path":"${(d.folder as { path: string }).path}"}`,
+              cmd: `sok plugin.soksak-plugin-folderpop.select {"path":"${(d.folder as { path: string }).path}"}`,
               why: "등록한 폴더를 활성 폴더로 전환할 수 있습니다",
             },
           ]
         : [],
   });
 
-  push("folder.remove", {
+  push("remove", {
     description: "Unregister a folder by path.",
     triggers: { ko: "폴더 제거 삭제 등록해제" },
     params: { path: { type: "string", description: "Folder path", required: true } },
@@ -76,7 +76,7 @@ export function registerCommands(ctx: PluginContext): void {
     },
   });
 
-  push("folder.rename", {
+  push("rename", {
     description: "Rename a registered folder's display name (empty resets to the folder name).",
     triggers: { ko: "폴더 이름변경 이름 폴더명" },
     params: {
@@ -91,7 +91,7 @@ export function registerCommands(ctx: PluginContext): void {
     },
   });
 
-  push("folder.select", {
+  push("select", {
     description: "Set the active folder (must be registered).",
     triggers: { ko: "폴더 선택 활성 전환" },
     params: { path: { type: "string", description: "Folder path", required: true } },

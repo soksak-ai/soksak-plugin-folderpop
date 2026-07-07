@@ -17,12 +17,26 @@ pick one, and browse its files and folders. Opening a file is delegated to the c
 
 Every feature is exposed as a command (`sok plugin.soksak-plugin-folderpop.<name>` / MCP):
 
-- `folder.list` — registered folders + active folder
-- `folder.add` `{path, name?}` — register a folder (validated as a directory)
-- `folder.remove` `{path}` — unregister
-- `folder.rename` `{path, name}` — rename (empty resets to the folder name)
-- `folder.select` `{path}` — set the active folder
+- `list` — registered folders + active folder
+- `add` `{path, name?}` — register a folder (validated as a directory)
+- `remove` `{path}` — unregister
+- `rename` `{path, name}` — rename (empty resets to the folder name)
+- `select` `{path}` — set the active folder
 - `ping` — load/version check
+
+### Breaking change: `folder.*` prefix dropped
+
+The full command name `plugin.soksak-plugin-folderpop.<name>` already states the
+domain once. The `folder.` namespace restated it (a truncation of the id token
+`folderpop`), so it is removed. Update any saved invocations:
+
+| Old | New |
+|-----|-----|
+| `folder.list` | `list` |
+| `folder.add` | `add` |
+| `folder.remove` | `remove` |
+| `folder.rename` | `rename` |
+| `folder.select` | `select` |
 
 ## Permissions
 

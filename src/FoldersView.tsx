@@ -155,7 +155,7 @@ export function FoldersView({
     await selectFolder(app, path);
     await reload();
   };
-  // 확인된 제거 — 데이터 레이어 removeFolder(=folder.remove 커맨드와 동일 경로). 활성이던 폴더면
+  // 확인된 제거 — 데이터 레이어 removeFolder(=remove 커맨드와 동일 경로). 활성이던 폴더면
   // removeFolder 가 활성을 첫 폴더로 보정. app.data 동기화로 칩은 reactively 사라진다(수동 splice 금지).
   const onRemove = async (path: string) => {
     await removeFolder(app, path);

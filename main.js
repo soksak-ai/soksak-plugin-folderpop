@@ -22678,7 +22678,7 @@ function registerCommands(ctx) {
     message: (d3) => `\uD3F4\uB354\uD31D ${d3.version} \uC801\uC7AC\uB428.`,
     handler: async () => ({ ok: true, plugin: "soksak-plugin-folderpop", version: "0.0.1" })
   });
-  push("folder.list", {
+  push("list", {
     description: "List registered folders and the active folder path.",
     triggers: { ko: "\uD3F4\uB354 \uBAA9\uB85D \uB4F1\uB85D\uD3F4\uB354 \uD3F4\uB354\uD31D \uBAA9\uB85D" },
     returns: "{ ok, folders:[{path,name}], active }",
@@ -22689,7 +22689,7 @@ function registerCommands(ctx) {
       active: await getActive(app)
     })
   });
-  push("folder.add", {
+  push("add", {
     description: "Register a folder by absolute path (validated as a directory). Name defaults to the folder name.",
     triggers: { ko: "\uD3F4\uB354 \uB4F1\uB85D \uCD94\uAC00 \uD3F4\uB354\uD31D \uD3F4\uB354\uCD94\uAC00" },
     params: {
@@ -22709,12 +22709,12 @@ function registerCommands(ctx) {
     // 등록만으로는 활성이 되지 않을 수 있음(첫 폴더가 아니면) — 활성 전환을 제시(add→select 사이클).
     hint: (d3) => d3.ok && d3.folder?.path ? [
       {
-        cmd: `sok plugin.soksak-plugin-folderpop.folder.select {"path":"${d3.folder.path}"}`,
+        cmd: `sok plugin.soksak-plugin-folderpop.select {"path":"${d3.folder.path}"}`,
         why: "\uB4F1\uB85D\uD55C \uD3F4\uB354\uB97C \uD65C\uC131 \uD3F4\uB354\uB85C \uC804\uD658\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4"
       }
     ] : []
   });
-  push("folder.remove", {
+  push("remove", {
     description: "Unregister a folder by path.",
     triggers: { ko: "\uD3F4\uB354 \uC81C\uAC70 \uC0AD\uC81C \uB4F1\uB85D\uD574\uC81C" },
     params: { path: { type: "string", description: "Folder path", required: true } },
@@ -22725,7 +22725,7 @@ function registerCommands(ctx) {
       return { ok: true };
     }
   });
-  push("folder.rename", {
+  push("rename", {
     description: "Rename a registered folder's display name (empty resets to the folder name).",
     triggers: { ko: "\uD3F4\uB354 \uC774\uB984\uBCC0\uACBD \uC774\uB984 \uD3F4\uB354\uBA85" },
     params: {
@@ -22739,7 +22739,7 @@ function registerCommands(ctx) {
       return folder ? { ok: true, folder } : { ok: false, code: "NOT_FOUND", message: "\uD3F4\uB354 \uC5C6\uC74C" };
     }
   });
-  push("folder.select", {
+  push("select", {
     description: "Set the active folder (must be registered).",
     triggers: { ko: "\uD3F4\uB354 \uC120\uD0DD \uD65C\uC131 \uC804\uD658" },
     params: { path: { type: "string", description: "Folder path", required: true } },

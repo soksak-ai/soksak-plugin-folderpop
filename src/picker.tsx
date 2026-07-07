@@ -1,6 +1,6 @@
 // folderpop 중첩 폴더 선택기 — @pierre/trees(FileTree) 기반 *폴더 전용* 트리(브라우즈 트리와 동일 룩).
 // 프로젝트 루트에 뿌리내리고, 펼치면 그 폴더의 하위 *디렉토리만* lazy list 한다(app.fs.list →
-// c.dir 필터). 임의 깊이의 폴더를 골라 선택 상태로 두고, 상위가 "추가" 로 folder.add(절대경로) 한다.
+// c.dir 필터). 임의 깊이의 폴더를 골라 선택 상태로 두고, 상위가 "추가" 로 add(절대경로) 한다.
 // 이미 등록된 폴더는 선택해도 pick 으로 surface 하지 않는다(추가 버튼 비활성 유지).
 import {
   type CSSProperties,

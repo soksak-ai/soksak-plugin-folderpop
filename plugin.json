@@ -42,35 +42,35 @@
         }
       },
       {
-        "name": "folder.list",
+        "name": "list",
         "title": {
           "ko": "등록 폴더 목록",
           "en": "List folders"
         }
       },
       {
-        "name": "folder.add",
+        "name": "add",
         "title": {
           "ko": "폴더 등록",
           "en": "Add folder"
         }
       },
       {
-        "name": "folder.remove",
+        "name": "remove",
         "title": {
           "ko": "폴더 제거",
           "en": "Remove folder"
         }
       },
       {
-        "name": "folder.rename",
+        "name": "rename",
         "title": {
           "ko": "폴더 이름 변경",
           "en": "Rename folder"
         }
       },
       {
-        "name": "folder.select",
+        "name": "select",
         "title": {
           "ko": "활성 폴더 선택",
           "en": "Select active folder"
