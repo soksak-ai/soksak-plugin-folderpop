@@ -76,6 +76,52 @@
           "en": "Select active folder"
         }
       }
+    ],
+    "nodes": [
+      {
+        "id": "chip",
+        "description": "Registered-folder chip; click selects it as the active folder. data-node=\"chip/<pathKey>\"."
+      },
+      {
+        "id": "chip-remove",
+        "description": "Per-chip remove button; opens the remove-confirm modal. data-node=\"chip-remove/<pathKey>\"."
+      },
+      {
+        "id": "rename",
+        "description": "Inline rename input for a chip, shown after a double-click. data-node=\"rename/<pathKey>\"."
+      },
+      {
+        "id": "add-btn",
+        "description": "Add-folder button; opens the folder-picker modal."
+      },
+      {
+        "id": "add-modal",
+        "description": "Add-folder modal backdrop; click closes it."
+      },
+      {
+        "id": "add-tree",
+        "description": "Folder-picker tree container inside the add-folder modal."
+      },
+      {
+        "id": "add-err",
+        "description": "Error line inside the add-folder modal."
+      },
+      {
+        "id": "add-confirm",
+        "description": "Confirm button that registers the picked folder."
+      },
+      {
+        "id": "remove-modal",
+        "description": "Remove-confirm modal backdrop; click closes it."
+      },
+      {
+        "id": "remove-cancel",
+        "description": "Cancel button in the remove-confirm modal."
+      },
+      {
+        "id": "remove-confirm",
+        "description": "Confirm button that unregisters the folder from the list."
+      }
     ]
   }
 }

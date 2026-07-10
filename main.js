@@ -11815,10 +11815,10 @@ var require_react_dom_client_production = __commonJS({
       for (caches = 0; caches < ownerDocument.length; caches++) {
         var node = ownerDocument[caches];
         if (!(node[internalHoistableMarker] || node[internalInstanceKey] || "link" === type && "stylesheet" === node.getAttribute("rel")) && "http://www.w3.org/2000/svg" !== node.namespaceURI) {
-          var nodeKey = node.getAttribute(keyAttribute) || "";
-          nodeKey = type + nodeKey;
-          var existing = cache.get(nodeKey);
-          existing ? existing.push(node) : cache.set(nodeKey, [node]);
+          var nodeKey2 = node.getAttribute(keyAttribute) || "";
+          nodeKey2 = type + nodeKey2;
+          var existing = cache.get(nodeKey2);
+          existing ? existing.push(node) : cache.set(nodeKey2, [node]);
         }
       }
       return cache;
@@ -12765,6 +12765,10 @@ function baseName(path) {
 }
 function normalizePath(p3) {
   return p3.trim().replace(/[\\/]+$/, "");
+}
+function nodeKey(path) {
+  const k3 = path.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
+  return /^[a-z0-9]/.test(k3) ? k3 : "f-" + k3;
 }
 async function listFolders(app) {
   const raw = await app.data?.kv.get(KEY_FOLDERS);
@@ -22442,7 +22446,7 @@ function FoldersView({
           "input",
           {
             className: "fp-tab-rename",
-            "data-node": `rename/${f4.name}`,
+            "data-node": `rename/${nodeKey(f4.path)}`,
             defaultValue: f4.name,
             autoFocus: true,
             onClick: (e3) => e3.stopPropagation(),
@@ -22461,7 +22465,7 @@ function FoldersView({
           {
             ref: active?.path === f4.path ? activeChipRef : void 0,
             className: `fp-tab${active?.path === f4.path ? " active" : ""}`,
-            "data-node": `chip/${f4.name}`,
+            "data-node": `chip/${nodeKey(f4.path)}`,
             title: f4.path,
             onClick: () => void onSelect(f4.path),
             onDoubleClick: () => setEditingPath(f4.path),
@@ -22471,7 +22475,7 @@ function FoldersView({
                 "button",
                 {
                   className: "fp-tab-x",
-                  "data-node": `chip-remove/${f4.name}`,
+                  "data-node": `chip-remove/${nodeKey(f4.path)}`,
                   title: "\uD3F4\uB354 \uC81C\uAC70",
                   onClick: (e3) => {
                     e3.stopPropagation();

@@ -24,6 +24,14 @@ export function normalizePath(p: string): string {
   return p.trim().replace(/[\\/]+$/, "");
 }
 
+// 폴더 path → data-node 세그먼트. 코어 NODE_PATH_RE(^[a-z0-9][a-z0-9.-]*$)를 지켜야 노드가
+// ui.tree 에 뜨므로 소문자화 + 허용 외 문자(슬래시·공백·언더스코어 등)를 "-" 로 치환하고,
+// 선두를 [a-z0-9] 로 보정한다. path(고유 키) 기반이라 표시명 변경·중복에도 안정.
+export function nodeKey(path: string): string {
+  const k = path.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
+  return /^[a-z0-9]/.test(k) ? k : "f-" + k;
+}
+
 export async function listFolders(app: PluginApi): Promise<Folder[]> {
   const raw = (await app.data?.kv.get(KEY_FOLDERS)) as Folder[] | null;
   return Array.isArray(raw) ? raw : [];

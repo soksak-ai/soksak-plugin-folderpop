@@ -18,6 +18,7 @@ import {
   renameFolder,
   removeFolder,
   selectFolder,
+  nodeKey,
 } from "./folders";
 import { LazyTree, detectDark, treeTheme } from "./tree";
 import { FolderPicker } from "./picker";
@@ -189,7 +190,7 @@ export function FoldersView({
             <input
               key={f.path}
               className="fp-tab-rename"
-              data-node={`rename/${f.name}`}
+              data-node={`rename/${nodeKey(f.path)}`}
               defaultValue={f.name}
               autoFocus
               onClick={(e) => e.stopPropagation()}
@@ -208,7 +209,7 @@ export function FoldersView({
               // 활성 칩에만 ref 부착 — 중앙 스크롤 대상.
               ref={active?.path === f.path ? activeChipRef : undefined}
               className={`fp-tab${active?.path === f.path ? " active" : ""}`}
-              data-node={`chip/${f.name}`}
+              data-node={`chip/${nodeKey(f.path)}`}
               title={f.path}
               onClick={() => void onSelect(f.path)}
               onDoubleClick={() => setEditingPath(f.path)}
@@ -218,7 +219,7 @@ export function FoldersView({
               <span className="fp-tab-title">{f.name}</span>
               <button
                 className="fp-tab-x"
-                data-node={`chip-remove/${f.name}`}
+                data-node={`chip-remove/${nodeKey(f.path)}`}
                 title="폴더 제거"
                 // × 클릭은 칩 select/rename 으로 새지 않게 차단 — 제거 확인 모달만 연다.
                 onClick={(e) => {
