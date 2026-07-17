@@ -2,14 +2,13 @@
   "spec": "soksak-spec-plugin@0.0.1",
   "id": "soksak-plugin-folderpop",
   "name": {
-    "ko": "폴더팝",
+    "ko": "\ud3f4\ub354\ud31d",
     "en": "Folderpop"
   },
   "version": "0.0.1",
-  "repo": "https://github.com/soksak-ai/soksak-plugin-folderpop.git",
   "description": {
-    "ko": "좌측 사이드바 폴더 탐색기 — 여러 폴더를 등록하고(각 이름 변경) 선택한 폴더의 파일/폴더를 보여준다. 파일 열기는 코어 editor.open 으로 위임.",
-    "en": "Left sidebar folder explorer — register multiple folders (each renamable) and browse the selected folder's files/folders. Opening a file is delegated to the core editor.open command."
+    "ko": "\uc88c\uce21 \uc0ac\uc774\ub4dc\ubc14 \ud3f4\ub354 \ud0d0\uc0c9\uae30 \u2014 \uc5ec\ub7ec \ud3f4\ub354\ub97c \ub4f1\ub85d\ud558\uace0(\uac01 \uc774\ub984 \ubcc0\uacbd) \uc120\ud0dd\ud55c \ud3f4\ub354\uc758 \ud30c\uc77c/\ud3f4\ub354\ub97c \ubcf4\uc5ec\uc900\ub2e4. \ud30c\uc77c \uc5f4\uae30\ub294 \ucf54\uc5b4 editor.open \uc73c\ub85c \uc704\uc784.",
+    "en": "Left sidebar folder explorer \u2014 register multiple folders (each renamable) and browse the selected folder's files/folders. Opening a file is delegated to the core editor.open command."
   },
   "entry": "main.js",
   "permissions": [
@@ -23,10 +22,10 @@
       {
         "id": "folders",
         "title": {
-          "ko": "폴더팝",
+          "ko": "\ud3f4\ub354\ud31d",
           "en": "Folderpop"
         },
-        "icon": "📂",
+        "icon": "\ud83d\udcc2",
         "placements": [
           "sidebar-left"
         ],
@@ -37,42 +36,42 @@
       {
         "name": "ping",
         "title": {
-          "ko": "적재/버전 확인(E2E)",
+          "ko": "\uc801\uc7ac/\ubc84\uc804 \ud655\uc778(E2E)",
           "en": "Ping (load/version check)"
         }
       },
       {
         "name": "list",
         "title": {
-          "ko": "등록 폴더 목록",
+          "ko": "\ub4f1\ub85d \ud3f4\ub354 \ubaa9\ub85d",
           "en": "List folders"
         }
       },
       {
         "name": "add",
         "title": {
-          "ko": "폴더 등록",
+          "ko": "\ud3f4\ub354 \ub4f1\ub85d",
           "en": "Add folder"
         }
       },
       {
         "name": "remove",
         "title": {
-          "ko": "폴더 제거",
+          "ko": "\ud3f4\ub354 \uc81c\uac70",
           "en": "Remove folder"
         }
       },
       {
         "name": "rename",
         "title": {
-          "ko": "폴더 이름 변경",
+          "ko": "\ud3f4\ub354 \uc774\ub984 \ubcc0\uacbd",
           "en": "Rename folder"
         }
       },
       {
         "name": "select",
         "title": {
-          "ko": "활성 폴더 선택",
+          "ko": "\ud65c\uc131 \ud3f4\ub354 \uc120\ud0dd",
           "en": "Select active folder"
         }
       }
