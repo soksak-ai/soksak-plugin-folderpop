@@ -27,9 +27,9 @@
         },
         "icon": "\ud83d\udcc2",
         "placements": [
-          "sidebar-left"
+          "rail"
         ],
-        "defaultPlacement": "sidebar-left"
+        "defaultPlacement": "rail"
       }
     ],
     "commands": [
